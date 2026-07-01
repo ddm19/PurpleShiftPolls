@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   getOptionsForQuestion,
   getQuestions,
@@ -284,8 +284,8 @@ function ChoiceQuestion({
               key={c}
               onClick={() => setSelected(c)}
               className={`w-full text-left px-5 py-4 border transition-all tracking-wide ${isSel
-                  ? "neon-border-purple neon-text-purple"
-                  : "border-border hover:border-primary/60"
+                ? "neon-border-purple neon-text-purple"
+                : "border-border hover:border-primary/60"
                 }`}
             >
               <span className="text-muted-foreground mr-3">
