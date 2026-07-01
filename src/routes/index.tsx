@@ -87,8 +87,8 @@ function SurveyPage() {
   if (error) {
     return (
       <Shell>
-        <div className="panel-cyber p-8">
-          <h2 className="neon-text-red text-xl mb-3 tracking-widest">
+        <div className="panel-cyber p-6 sm:p-8">
+          <h2 className="neon-text-red text-lg sm:text-xl mb-3 tracking-widest">
             ✕ CONNECTION ERROR
           </h2>
           <p className="text-muted-foreground text-sm mb-2">
@@ -108,7 +108,10 @@ function SurveyPage() {
         <div className="panel-cyber p-8 text-center">
           <p className="text-muted-foreground">
             // no questions configured. visit{" "}
-            <a href="/admin" className="neon-text-blue">/admin</a> to set them up.
+            <a href="/admin" className="neon-text-blue">
+              /admin
+            </a>{" "}
+            to set them up.
           </p>
         </div>
       </Shell>
@@ -119,7 +122,7 @@ function SurveyPage() {
     return (
       <Shell>
         <div className="slide-in text-center">
-          <h1 className="neon-text-purple text-5xl font-bold mb-4 flicker">
+          <h1 className="neon-text-purple text-4xl sm:text-5xl font-bold mb-4 flicker">
             TRANSMISSION RECEIVED
           </h1>
           <p className="text-muted-foreground mb-8">
@@ -153,12 +156,12 @@ function SurveyPage() {
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative z-10 min-h-screen flex flex-col">
-      <header className="px-6 py-5 flex items-center justify-between border-b border-border/40">
+      <header className="px-4 py-4 sm:px-6 sm:py-5 flex items-center justify-between border-b border-border/40">
         <div>
-          <span className="neon-text-purple text-xl font-bold tracking-[0.3em]">
+          <span className="neon-text-purple text-lg sm:text-xl font-bold tracking-[0.3em]">
             PURPLE
           </span>
-          <span className="neon-text-red text-xl font-bold tracking-[0.3em] ml-1">
+          <span className="neon-text-red text-lg sm:text-xl font-bold tracking-[0.3em] ml-1">
             ::SHIFT
           </span>
           <div className="text-[10px] text-muted-foreground tracking-widest mt-0.5">
@@ -173,7 +176,7 @@ function Shell({ children }: { children: React.ReactNode }) {
         </a>
       </header>
       <main className="flex-1 flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-3xl">{children}</div>
+        <div className="w-full max-w-4xl">{children}</div>
       </main>
     </div>
   );
@@ -182,9 +185,12 @@ function Shell({ children }: { children: React.ReactNode }) {
 function ProgressBar({ current, total }: { current: number; total: number }) {
   const pct = (current / total) * 100;
   return (
-    <div className="mb-8">
+    <div className="mb-6 sm:mb-8">
       <div className="flex justify-between text-[10px] tracking-widest text-muted-foreground mb-2">
-        <span>QUERY {String(current).padStart(2, "0")} / {String(total).padStart(2, "0")}</span>
+        <span>
+          QUERY {String(current).padStart(2, "0")} /{" "}
+          {String(total).padStart(2, "0")}
+        </span>
         <span className="neon-text-blue">{Math.round(pct)}%</span>
       </div>
       <div className="h-1 bg-muted overflow-hidden">
@@ -214,13 +220,17 @@ function QuestionView({
   if (question.type === "text")
     return <TextQuestion q={question} onAnswer={onAnswer} disabled={disabled} />;
   if (question.type === "multiple_choice")
-    return <ChoiceQuestion q={question} onAnswer={onAnswer} disabled={disabled} />;
-  return <GalleryQuestion q={question} onAnswer={onAnswer} disabled={disabled} />;
+    return (
+      <ChoiceQuestion q={question} onAnswer={onAnswer} disabled={disabled} />
+    );
+  return (
+    <GalleryQuestion q={question} onAnswer={onAnswer} disabled={disabled} />
+  );
 }
 
 function Prompt({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="text-2xl md:text-3xl font-bold mb-8 leading-snug">
+    <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-6 sm:mb-8 leading-snug">
       <span className="neon-text-purple mr-2">{">"}</span>
       {children}
     </h2>
@@ -238,16 +248,17 @@ function TextQuestion({
 }) {
   const [val, setVal] = useState("");
   return (
-    <div className="panel-cyber p-8">
+    <div className="panel-cyber p-6 sm:p-8">
       <Prompt>{q.text_prompt}</Prompt>
       <input
         autoFocus
-        className="input-cyber w-full text-lg"
+        className="input-cyber w-full text-base sm:text-lg"
         placeholder="enter response..."
         value={val}
         onChange={(e) => setVal(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === "Enter" && val.trim() && !disabled) onAnswer(val.trim());
+          if (e.key === "Enter" && val.trim() && !disabled)
+            onAnswer(val.trim());
         }}
       />
       <div className="mt-6 flex justify-end">
@@ -274,7 +285,7 @@ function ChoiceQuestion({
 }) {
   const [selected, setSelected] = useState<string | null>(null);
   return (
-    <div className="panel-cyber p-8">
+    <div className="panel-cyber p-6 sm:p-8">
       <Prompt>{q.text_prompt}</Prompt>
       <div className="space-y-3">
         {(q.choices ?? []).map((c) => {
@@ -283,10 +294,11 @@ function ChoiceQuestion({
             <button
               key={c}
               onClick={() => setSelected(c)}
-              className={`w-full text-left px-5 py-4 border transition-all tracking-wide ${isSel
-                ? "neon-border-purple neon-text-purple"
-                : "border-border hover:border-primary/60"
-                }`}
+              className={`w-full text-left px-4 py-3 sm:px-5 sm:py-4 border transition-all tracking-wide ${
+                isSel
+                  ? "neon-border-purple neon-text-purple"
+                  : "border-border hover:border-primary/60"
+              }`}
             >
               <span className="text-muted-foreground mr-3">
                 [{isSel ? "■" : " "}]
@@ -326,8 +338,17 @@ function GalleryQuestion({
   useEffect(() => {
     let alive = true;
     getOptionsForQuestion(q.id)
-      // Set initial focus to the middle card for better presentation
-      .then((opts) => alive && setOptions(opts))
+      .then((opts) => {
+        if (alive) {
+          setOptions(opts);
+          if (opts.length > 0) {
+            // Start at the middle image for better presentation
+            const startIdx = Math.floor(opts.length / 2);
+            setFocusedIdx(startIdx);
+            setTimeout(() => scrollTo(startIdx, "auto"), 50);
+          }
+        }
+      })
       .finally(() => alive && setLoading(false));
     return () => {
       alive = false;
@@ -337,34 +358,43 @@ function GalleryQuestion({
   useEffect(() => {
     const container = scrollerRef.current;
     if (!container) return;
+    let timeout: any;
     const onScroll = () => {
-      const cards = container.querySelectorAll<HTMLDivElement>("[data-card]");
-      const center = container.scrollLeft + container.clientWidth / 2;
-      let best = 0;
-      let bestDist = Infinity;
-      cards.forEach((card, i) => {
-        const cardCenter = card.offsetLeft + card.offsetWidth / 2;
-        const d = Math.abs(cardCenter - center);
-        if (d < bestDist) {
-          bestDist = d;
-          best = i;
-        }
-      });
-      setFocusedIdx(best);
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        const cards = container.querySelectorAll<HTMLDivElement>("[data-card]");
+        const center = container.scrollLeft + container.clientWidth / 2;
+        let best = 0;
+        let bestDist = Infinity;
+        cards.forEach((card, i) => {
+          const cardCenter = card.offsetLeft + card.offsetWidth / 2;
+          const d = Math.abs(cardCenter - center);
+          if (d < bestDist) {
+            bestDist = d;
+            best = i;
+          }
+        });
+        setFocusedIdx(best);
+      }, 100);
     };
     container.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
     return () => container.removeEventListener("scroll", onScroll);
   }, [options]);
 
   const focused = useMemo(() => options[focusedIdx], [options, focusedIdx]);
 
-  const scrollTo = (index: number) => {
+  const scrollTo = (index: number, behavior: "smooth" | "auto" = "smooth") => {
     const container = scrollerRef.current;
     if (!container) return;
-    const card = container.querySelectorAll<HTMLDivElement>("[data-card]")[index];
+    const card = container.querySelectorAll<HTMLDivElement>("[data-card]")[
+      index
+    ];
     if (card) {
-      card.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+      card.scrollIntoView({
+        behavior,
+        block: "nearest",
+        inline: "center",
+      });
     }
   };
 
@@ -393,7 +423,10 @@ function GalleryQuestion({
         <p className="text-muted-foreground mb-6">
           // no level data uploaded yet. visit /admin to load levels.
         </p>
-        <button className="btn-neon-blue px-6 py-2" onClick={() => onAnswer("__skipped__")}>
+        <button
+          className="btn-neon-blue px-6 py-2"
+          onClick={() => onAnswer("__skipped__")}
+        >
           Skip →
         </button>
       </div>
@@ -406,8 +439,13 @@ function GalleryQuestion({
       <div className="relative">
         <div
           ref={scrollerRef}
-          className="scrollbar-cyber flex gap-6 overflow-x-auto snap-x snap-mandatory pb-6 px-[20%]"
-          style={{ scrollPaddingInline: "20%" }}
+          className="scrollbar-cyber flex gap-4 md:gap-8 overflow-x-auto snap-x snap-mandatory pb-6"
+          style={{
+            paddingLeft: "calc(50% - 140px)",
+            paddingRight: "calc(50% - 140px)",
+            scrollPaddingLeft: "calc(50% - 140px)",
+            scrollPaddingRight: "calc(50% - 140px)",
+          }}
         >
           {options.map((opt, i) => (
             <LevelCard key={opt.id} opt={opt} active={i === focusedIdx} />
@@ -416,7 +454,7 @@ function GalleryQuestion({
         <button
           onClick={scrollPrev}
           disabled={focusedIdx === 0}
-          className="absolute left-4 top-1/2 -translate-y-1/2 btn-neon-blue p-2 w-12 h-12 rounded-full disabled:opacity-20 disabled:cursor-not-allowed"
+          className="absolute left-0 sm:left-4 top-1/2 -translate-y-1/2 btn-neon-blue p-2 w-10 h-10 sm:w-12 sm:h-12 rounded-full disabled:opacity-20 disabled:cursor-not-allowed z-10"
           aria-label="Previous level"
         >
           {"<"}
@@ -424,13 +462,13 @@ function GalleryQuestion({
         <button
           onClick={scrollNext}
           disabled={focusedIdx === options.length - 1}
-          className="absolute right-4 top-1/2 -translate-y-1/2 btn-neon-blue p-2 w-12 h-12 rounded-full disabled:opacity-20 disabled:cursor-not-allowed"
+          className="absolute right-0 sm:right-4 top-1/2 -translate-y-1/2 btn-neon-blue p-2 w-10 h-10 sm:w-12 sm:h-12 rounded-full disabled:opacity-20 disabled:cursor-not-allowed z-10"
           aria-label="Next level"
         >
           {">"}
         </button>
       </div>
-      <div className="mt-6 text-center">
+      <div className="mt-4 sm:mt-6 text-center">
         <div className="text-[10px] tracking-widest text-muted-foreground mb-3">
           SELECTED // {focusedIdx + 1} OF {options.length}
         </div>
@@ -453,31 +491,38 @@ function LevelCard({ opt, active }: { opt: LevelOption; active: boolean }) {
   return (
     <div
       data-card
-      className={`snap-center shrink-0 w-[300px] md:w-[380px] transition-all duration-500 ${active ? "scale-100 opacity-100" : "scale-90 opacity-50"
-        }`}
+      className={`snap-center shrink-0 w-[280px] sm:w-[320px] md:w-[420px] transition-all duration-300 ${
+        active ? "scale-100 opacity-100" : "scale-90 opacity-60"
+      }`}
     >
       <div
-        className={`relative aspect-[4/5] overflow-hidden ${active ? "neon-border-purple" : "border border-border"
-          }`}
+        className={`relative aspect-video overflow-hidden bg-black/40 transition-all duration-300 ${
+          active ? "neon-border-purple" : "border border-border/50"
+        }`}
       >
         {opt.image_url ? (
           <img
             src={opt.image_url}
             alt={opt.title}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
           />
         ) : (
           <div className="w-full h-full bg-muted flex items-center justify-center text-muted-foreground">
             no image
           </div>
         )}
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background via-background/85 to-transparent p-5">
+        <div
+          className={`absolute inset-x-0 bottom-0 bg-gradient-to-t from-background via-background/85 to-transparent p-3 sm:p-4 transition-colors duration-300 ${
+            active ? "" : "via-background/60"
+          }`}
+        >
           <div className="text-[10px] tracking-widest text-muted-foreground mb-1">
             LEVEL FILE
           </div>
           <div
-            className={`text-xl font-bold ${active ? "neon-text-purple" : "text-foreground"
-              }`}
+            className={`text-lg sm:text-xl font-bold transition-colors duration-300 ${
+              active ? "neon-text-purple" : "text-foreground"
+            }`}
           >
             {opt.title}
           </div>
