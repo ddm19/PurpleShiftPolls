@@ -283,11 +283,10 @@ function ChoiceQuestion({
             <button
               key={c}
               onClick={() => setSelected(c)}
-              className={`w-full text-left px-5 py-4 border transition-all tracking-wide ${
-                isSel
+              className={`w-full text-left px-5 py-4 border transition-all tracking-wide ${isSel
                   ? "neon-border-purple neon-text-purple"
                   : "border-border hover:border-primary/60"
-              }`}
+                }`}
             >
               <span className="text-muted-foreground mr-3">
                 [{isSel ? "■" : " "}]
@@ -320,12 +319,14 @@ function GalleryQuestion({
   disabled?: boolean;
 }) {
   const [options, setOptions] = useState<LevelOption[]>([]);
+  const scrollerRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [focusedIdx, setFocusedIdx] = useState(0);
 
   useEffect(() => {
     let alive = true;
     getOptionsForQuestion(q.id)
+      // Set initial focus to the middle card for better presentation
       .then((opts) => alive && setOptions(opts))
       .finally(() => alive && setLoading(false));
     return () => {
@@ -334,7 +335,7 @@ function GalleryQuestion({
   }, [q.id]);
 
   useEffect(() => {
-    const container = document.getElementById("level-scroller");
+    const container = scrollerRef.current;
     if (!container) return;
     const onScroll = () => {
       const cards = container.querySelectorAll<HTMLDivElement>("[data-card]");
@@ -354,9 +355,27 @@ function GalleryQuestion({
     container.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
     return () => container.removeEventListener("scroll", onScroll);
-  }, [options.length]);
+  }, [options]);
 
   const focused = useMemo(() => options[focusedIdx], [options, focusedIdx]);
+
+  const scrollTo = (index: number) => {
+    const container = scrollerRef.current;
+    if (!container) return;
+    const card = container.querySelectorAll<HTMLDivElement>("[data-card]")[index];
+    if (card) {
+      card.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    }
+  };
+
+  const scrollPrev = () => {
+    const newIndex = Math.max(0, focusedIdx - 1);
+    scrollTo(newIndex);
+  };
+  const scrollNext = () => {
+    const newIndex = Math.min(options.length - 1, focusedIdx + 1);
+    scrollTo(newIndex);
+  };
 
   if (loading) {
     return (
@@ -384,18 +403,39 @@ function GalleryQuestion({
   return (
     <div>
       <Prompt>{q.text_prompt}</Prompt>
-      <div
-        id="level-scroller"
-        className="scrollbar-cyber flex gap-6 overflow-x-auto snap-x snap-mandatory pb-6 px-[20%]"
-        style={{ scrollPaddingInline: "20%" }}
-      >
-        {options.map((opt, i) => (
-          <LevelCard key={opt.id} opt={opt} active={i === focusedIdx} />
-        ))}
+      <div className="relative">
+        <div
+          ref={scrollerRef}
+          className="scrollbar-cyber flex gap-6 overflow-x-auto snap-x snap-mandatory pb-6 px-[20%]"
+          style={{ scrollPaddingInline: "20%" }}
+        >
+          {options.map((opt, i) => (
+            <LevelCard key={opt.id} opt={opt} active={i === focusedIdx} />
+          ))}
+        </div>
+        <button
+          onClick={scrollPrev}
+          disabled={focusedIdx === 0}
+          className="absolute left-4 top-1/2 -translate-y-1/2 btn-neon-blue p-2 w-12 h-12 rounded-full disabled:opacity-20 disabled:cursor-not-allowed"
+          aria-label="Previous level"
+        >
+          {"<"}
+        </button>
+        <button
+          onClick={scrollNext}
+          disabled={focusedIdx === options.length - 1}
+          className="absolute right-4 top-1/2 -translate-y-1/2 btn-neon-blue p-2 w-12 h-12 rounded-full disabled:opacity-20 disabled:cursor-not-allowed"
+          aria-label="Next level"
+        >
+          {">"}
+        </button>
       </div>
       <div className="mt-6 text-center">
         <div className="text-[10px] tracking-widest text-muted-foreground mb-3">
           SELECTED // {focusedIdx + 1} OF {options.length}
+        </div>
+        <div className="h-8 mb-3 text-lg neon-text-purple font-bold tracking-widest transition-opacity duration-300">
+          {focused?.title}
         </div>
         <button
           className="btn-neon-purple px-10 py-4 text-base"
@@ -413,14 +453,12 @@ function LevelCard({ opt, active }: { opt: LevelOption; active: boolean }) {
   return (
     <div
       data-card
-      className={`snap-center shrink-0 w-[300px] md:w-[380px] transition-all duration-300 ${
-        active ? "scale-100 opacity-100" : "scale-90 opacity-50"
-      }`}
+      className={`snap-center shrink-0 w-[300px] md:w-[380px] transition-all duration-500 ${active ? "scale-100 opacity-100" : "scale-90 opacity-50"
+        }`}
     >
       <div
-        className={`relative aspect-[4/5] overflow-hidden ${
-          active ? "neon-border-purple" : "border border-border"
-        }`}
+        className={`relative aspect-[4/5] overflow-hidden ${active ? "neon-border-purple" : "border border-border"
+          }`}
       >
         {opt.image_url ? (
           <img
@@ -438,9 +476,8 @@ function LevelCard({ opt, active }: { opt: LevelOption; active: boolean }) {
             LEVEL FILE
           </div>
           <div
-            className={`text-xl font-bold ${
-              active ? "neon-text-purple" : "text-foreground"
-            }`}
+            className={`text-xl font-bold ${active ? "neon-text-purple" : "text-foreground"
+              }`}
           >
             {opt.title}
           </div>
