@@ -247,10 +247,18 @@ function QuestionRow({
         <div className="font-bold truncate">{q.text_prompt || "(untitled)"}</div>
       </div>
       <div className="flex gap-1">
-        <button className="btn-neon-blue px-2 py-1 text-xs" onClick={() => onMove(-1)}>↑</button>
-        <button className="btn-neon-blue px-2 py-1 text-xs" onClick={() => onMove(1)}>↓</button>
-        <button className="btn-neon-blue px-3 py-1 text-xs" onClick={onEdit}>Edit</button>
-        <button className="btn-neon-red px-3 py-1 text-xs" onClick={onDelete}>Del</button>
+        <button className="btn-neon-blue px-2 py-1 text-xs" onClick={() => onMove(-1)}>
+          ↑
+        </button>
+        <button className="btn-neon-blue px-2 py-1 text-xs" onClick={() => onMove(1)}>
+          ↓
+        </button>
+        <button className="btn-neon-blue px-3 py-1 text-xs" onClick={onEdit}>
+          Edit
+        </button>
+        <button className="btn-neon-red px-3 py-1 text-xs" onClick={onDelete}>
+          Del
+        </button>
       </div>
     </div>
   );
@@ -442,9 +450,7 @@ function LevelManager({ questionId }: { questionId: string }) {
         />
       </div>
 
-      {error && (
-        <div className="neon-text-red text-xs mt-2 tracking-widest">✕ {error}</div>
-      )}
+      {error && <div className="neon-text-red text-xs mt-2 tracking-widest">✕ {error}</div>}
 
       {pending.length > 0 && (
         <div className="mt-4 panel-cyber p-4">
@@ -454,7 +460,9 @@ function LevelManager({ questionId }: { questionId: string }) {
           <div className="space-y-2">
             {pending.map((p, i) => (
               <div key={p.id} className="flex items-center gap-3">
-                <img src={p.preview} alt="" className="w-14 h-14 object-cover border border-border" />
+                <div className="w-14 flex justify-center">
+                  <img src={p.preview} alt="" className="block max-h-14 max-w-14 w-auto h-auto" />
+                </div>
                 <input
                   className="input-cyber flex-1"
                   value={p.title}
@@ -497,8 +505,12 @@ function LevelManager({ questionId }: { questionId: string }) {
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {opts.map((o) => (
               <div key={o.id} className="panel-cyber p-2">
-                <div className="aspect-video overflow-hidden mb-2">
-                  <img src={o.image_url} alt={o.title} className="w-full h-full object-cover" />
+                <div className="flex justify-center mb-2">
+                  <img
+                    src={o.image_url}
+                    alt={o.title}
+                    className="block max-h-48 max-w-full w-auto h-auto"
+                  />
                 </div>
                 <input
                   className="input-cyber w-full text-sm mb-2"

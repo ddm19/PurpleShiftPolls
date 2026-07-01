@@ -299,9 +299,7 @@ function ChoiceQuestion({
                   : "border-border hover:border-primary/60"
                 }`}
             >
-              <span className="text-muted-foreground mr-3">
-                [{isSel ? "■" : " "}]
-              </span>
+              <span className="text-muted-foreground mr-3">[{isSel ? "■" : " "}]</span>
               {c}
             </button>
           );
@@ -490,39 +488,21 @@ function LevelCard({ opt, active }: { opt: LevelOption; active: boolean }) {
   return (
     <div
       data-card
-      className={`snap-center shrink-0 w-[320px] sm:w-[480px] md:w-[600px] transition-all duration-300 ${active ? "scale-100 opacity-100" : "scale-90 opacity-60"
-        }`}
+      className={`snap-center shrink-0 w-[320px] sm:w-[480px] md:w-[600px] flex justify-center transition-all duration-300 ${
+        active ? "scale-100 opacity-100" : "scale-90 opacity-60"
+      }`}
     >
-      <div
-        className={`relative aspect-video overflow-hidden bg-black/40 transition-all duration-300 ${active ? "neon-border-purple" : "border border-border/50"
-          }`}
-      >
-        {opt.image_url ? (
-          <img
-            src={opt.image_url}
-            alt={opt.title}
-            className="w-full h-full object-contain"
-          />
-        ) : (
-          <div className="w-full h-full bg-muted flex items-center justify-center text-muted-foreground">
-            no image
-          </div>
-        )}
-        <div
-          className={`absolute inset-x-0 bottom-0 bg-gradient-to-t from-background via-background/85 to-transparent p-3 sm:p-4 transition-colors duration-300 ${active ? "" : "via-background/60"
-            }`}
-        >
-          <div className="text-[10px] tracking-widest text-muted-foreground mb-1">
-            LEVEL FILE
-          </div>
-          <div
-            className={`text-lg sm:text-xl font-bold transition-colors duration-300 ${active ? "neon-text-purple" : "text-foreground"
-              }`}
-          >
-            {opt.title}
-          </div>
+      {opt.image_url ? (
+        <img
+          src={opt.image_url}
+          alt={opt.title}
+          className="block max-h-[62vh] max-w-full w-auto h-auto"
+        />
+      ) : (
+        <div className="min-h-48 w-full bg-muted flex items-center justify-center text-muted-foreground">
+          no image
         </div>
-      </div>
+      )}
     </div>
   );
 }
