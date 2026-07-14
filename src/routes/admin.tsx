@@ -19,8 +19,8 @@ import {
 export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
-      { title: "Purple Shift — Admin Console" },
-      { name: "description", content: "Admin console for Purple Shift survey." },
+      { title: "Purple Shift — Consola de Administración" },
+      { name: "description", content: "Consola de administración para la encuesta de Purple Shift." },
       { name: "robots", content: "noindex,nofollow" },
     ],
   }),
@@ -69,14 +69,14 @@ function PasswordGate({ onPass }: { onPass: () => void }) {
       <div className="panel-cyber p-10 w-full max-w-md slide-in">
         <div className="text-center mb-8">
           <div className="text-[10px] tracking-[0.4em] text-muted-foreground mb-2">
-            // SECURE TERMINAL
+            // TERMINAL SEGURO
           </div>
           <h1 className="neon-text-red text-3xl font-bold tracking-widest flicker">
-            ACCESS GATE
+            PUERTA DE ACCESO
           </h1>
         </div>
         <label className="block text-[10px] tracking-widest text-muted-foreground mb-2">
-          AUTH KEY
+          CLAVE DE AUTENTICACIÓN
         </label>
         <input
           autoFocus
@@ -88,22 +88,21 @@ function PasswordGate({ onPass }: { onPass: () => void }) {
             setErr(false);
           }}
           onKeyDown={(e) => e.key === "Enter" && submit()}
-          className={`input-cyber w-full text-center text-2xl tracking-[0.5em] ${
-            err ? "neon-border-red" : ""
-          }`}
+          className={`input-cyber w-full text-center text-2xl tracking-[0.5em] ${err ? "neon-border-red" : ""
+            }`}
           placeholder="••••"
         />
         {err && (
           <div className="neon-text-red text-xs mt-3 tracking-widest text-center">
-            ✕ AUTH DENIED
+            ✕ ACCESO DENEGADO
           </div>
         )}
         <button onClick={submit} className="btn-neon-purple w-full py-3 mt-6">
-          Authenticate
+          Autenticar
         </button>
         <div className="text-center mt-6">
-          <a href="/" className="text-xs text-muted-foreground hover:neon-text-blue tracking-widest">
-            ← BACK TO SURVEY
+          <a href="/" className="text-xs text-muted-foreground hover:neon-text-blue tracking-widest" >
+            ← VOLVER A LA ENCUESTA
           </a>
         </div>
       </div>
@@ -143,19 +142,19 @@ function AdminConsole({ onLock }: { onLock: () => void }) {
       <header className="px-6 py-5 flex items-center justify-between border-b border-border/40">
         <div>
           <span className="neon-text-purple text-xl font-bold tracking-[0.3em]">ADMIN</span>
-          <span className="neon-text-red text-xl font-bold tracking-[0.3em] ml-1">::CONSOLE</span>
+          <span className="neon-text-red text-xl font-bold tracking-[0.3em] ml-1">::CONSOLA</span>
         </div>
         <div className="flex gap-3">
-          <a href="/" className="btn-neon-blue px-4 py-2 text-xs">View Survey</a>
-          <button onClick={onLock} className="btn-neon-red px-4 py-2 text-xs">Lock</button>
+          <a href="/" className="btn-neon-blue px-4 py-2 text-xs">Ver Encuesta</a>
+          <button onClick={onLock} className="btn-neon-red px-4 py-2 text-xs">Bloquear</button>
         </div>
       </header>
 
       <main className="max-w-6xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold neon-text-blue tracking-widest">QUESTIONS</h1>
+          <h1 className="text-2xl font-bold neon-text-blue tracking-widest">PREGUNTAS</h1>
           <button onClick={newQuestion} className="btn-neon-purple px-5 py-2">
-            + New Question
+            + Nueva Pregunta
           </button>
         </div>
 
@@ -185,7 +184,7 @@ function AdminConsole({ onLock }: { onLock: () => void }) {
         <div className="space-y-3 mt-6">
           {questions.length === 0 && (
             <div className="text-muted-foreground text-center py-12">
-              // no questions defined. click "new question" to begin.
+              // no hay preguntas definidas. haz clic en "nueva pregunta" para empezar.
             </div>
           )}
           {questions.map((q) => (
@@ -194,7 +193,7 @@ function AdminConsole({ onLock }: { onLock: () => void }) {
               q={q}
               onEdit={() => setEditing(q)}
               onDelete={async () => {
-                if (confirm(`Delete "${q.text_prompt}"?`)) {
+                if (confirm(`¿Borrar "${q.text_prompt}"?`)) {
                   try {
                     await deleteQuestion(q.id);
                     await refresh();
@@ -244,7 +243,7 @@ function QuestionRow({
         <div className="text-[10px] tracking-widest neon-text-blue mb-1">
           {q.type.toUpperCase().replace("_", " ")}
         </div>
-        <div className="font-bold truncate">{q.text_prompt || "(untitled)"}</div>
+        <div className="font-bold truncate">{q.text_prompt || "(sin título)"}</div>
       </div>
       <div className="flex gap-1">
         <button className="btn-neon-blue px-2 py-1 text-xs" onClick={() => onMove(-1)}>
@@ -254,10 +253,10 @@ function QuestionRow({
           ↓
         </button>
         <button className="btn-neon-blue px-3 py-1 text-xs" onClick={onEdit}>
-          Edit
+          Editar
         </button>
         <button className="btn-neon-red px-3 py-1 text-xs" onClick={onDelete}>
-          Del
+          Borrar
         </button>
       </div>
     </div>
@@ -291,37 +290,37 @@ function QuestionEditor({
     <div className="panel-cyber p-6 neon-border-purple slide-in">
       <div className="grid md:grid-cols-3 gap-4 mb-4">
         <div className="md:col-span-2">
-          <Label>Prompt</Label>
+          <Label>Pregunta</Label>
           <input
             className="input-cyber w-full"
             value={q.text_prompt}
             onChange={(e) => setQ({ ...q, text_prompt: e.target.value })}
-            placeholder="Enter the question prompt..."
+            placeholder="Introduce el texto de la pregunta..."
           />
         </div>
         <div>
-          <Label>Type</Label>
+          <Label>Tipo</Label>
           <select
             className="input-cyber w-full"
             value={q.type}
             onChange={(e) => setQ({ ...q, type: e.target.value as QuestionType })}
           >
-            <option value="text">Text Input</option>
-            <option value="multiple_choice">Multiple Choice</option>
-            <option value="level_gallery">Level Gallery</option>
+            <option value="text">Entrada de Texto</option>
+            <option value="multiple_choice">Opción Múltiple</option>
+            <option value="level_gallery">Galería de Niveles</option>
           </select>
         </div>
       </div>
 
       {q.type === "multiple_choice" && (
         <div className="mb-4">
-          <Label>Choices (one per line)</Label>
+          <Label>Opciones (una por línea)</Label>
           <textarea
             className="input-cyber w-full font-mono"
             rows={4}
             value={choicesText}
             onChange={(e) => setChoicesText(e.target.value)}
-            placeholder={"Option A\nOption B\nOption C"}
+            placeholder={"Opción A\nOpción B\nOpción C"}
           />
         </div>
       )}
@@ -329,8 +328,8 @@ function QuestionEditor({
       {q.type === "level_gallery" && <LevelManager questionId={q.id} />}
 
       <div className="flex justify-end gap-3 mt-6">
-        <button className="btn-neon-red px-5 py-2" onClick={onCancel}>Cancel</button>
-        <button className="btn-neon-purple px-6 py-2" onClick={save}>Save Question</button>
+        <button className="btn-neon-red px-5 py-2" onClick={onCancel}>Cancelar</button>
+        <button className="btn-neon-purple px-6 py-2" onClick={save}>Guardar Pregunta</button>
       </div>
     </div>
   );
@@ -414,7 +413,7 @@ function LevelManager({ questionId }: { questionId: string }) {
 
   return (
     <div className="mt-2">
-      <Label>Level Images</Label>
+      <Label>Imágenes de Nivel</Label>
 
       <div
         onDragOver={(e) => {
@@ -428,15 +427,14 @@ function LevelManager({ questionId }: { questionId: string }) {
           handleFiles(e.dataTransfer.files);
         }}
         onClick={() => inputRef.current?.click()}
-        className={`border-2 border-dashed p-8 text-center cursor-pointer transition-all ${
-          dragging
+        className={`border-2 border-dashed p-8 text-center cursor-pointer transition-all ${dragging
             ? "neon-border-purple bg-primary/5"
             : "border-border hover:border-primary/60"
-        }`}
+          }`}
       >
         <div className="neon-text-purple text-3xl mb-2">⬆</div>
-        <div className="tracking-widest text-sm">DROP IMAGES OR CLICK TO UPLOAD</div>
-        <div className="text-xs text-muted-foreground mt-1">multiple files supported</div>
+        <div className="tracking-widest text-sm">SUELTA IMÁGENES O HAZ CLIC PARA SUBIR</div>
+        <div className="text-xs text-muted-foreground mt-1">se admiten múltiples archivos</div>
         <input
           ref={inputRef}
           type="file"
@@ -455,7 +453,7 @@ function LevelManager({ questionId }: { questionId: string }) {
       {pending.length > 0 && (
         <div className="mt-4 panel-cyber p-4">
           <div className="text-[10px] tracking-widest neon-text-blue mb-3">
-            PENDING UPLOAD · {pending.length}
+            SUBIDA PENDIENTE · {pending.length}
           </div>
           <div className="space-y-2">
             {pending.map((p, i) => (
@@ -471,7 +469,7 @@ function LevelManager({ questionId }: { questionId: string }) {
                     next[i] = { ...p, title: e.target.value };
                     setPending(next);
                   }}
-                  placeholder="Level title..."
+                  placeholder="Título del nivel..."
                 />
                 <button
                   className="btn-neon-red px-3 py-1 text-xs"
@@ -491,16 +489,16 @@ function LevelManager({ questionId }: { questionId: string }) {
             className="btn-neon-purple px-5 py-2 mt-4"
           >
             {uploading
-              ? "Uploading..."
-              : `Save ${pending.length} Level${pending.length === 1 ? "" : "s"}`}
+              ? "Subiendo..."
+              : `Guardar ${pending.length} Nivel${pending.length === 1 ? "" : "es"}`}
           </button>
         </div>
       )}
 
       {opts.length > 0 && (
         <div className="mt-6">
-          <div className="text-[10px] tracking-widest text-muted-foreground mb-3">
-            CURRENT LEVELS · {opts.length}
+          <div className="text-[10px] tracking-widest text-muted-foreground mb-3" >
+            NIVELES ACTUALES · {opts.length}
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {opts.map((o) => (
@@ -526,13 +524,13 @@ function LevelManager({ questionId }: { questionId: string }) {
                 <button
                   className="btn-neon-red w-full py-1 text-xs"
                   onClick={async () => {
-                    if (confirm(`Delete "${o.title}"?`)) {
+                    if (confirm(`¿Borrar "${o.title}"?`)) {
                       await deleteOption(o.id);
                       await refresh();
                     }
                   }}
                 >
-                  Delete
+                  Borrar
                 </button>
               </div>
             ))}

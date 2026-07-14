@@ -11,16 +11,16 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Purple Shift — Operator Survey" },
+      { title: "Purple Shift" },
       {
         name: "description",
         content:
-          "Help shape Purple Shift. Vote on levels, combat styles and more in the operator survey.",
+          "Ayuda a dar forma a Purple Shift. Vota por niveles, estilos de combate y más en la encuesta de playtest.",
       },
-      { property: "og:title", content: "Purple Shift — Operator Survey" },
+      { property: "og:title", content: "Purple Shift — Encuesta de Playtest" },
       {
         property: "og:description",
-        content: "Cyberpunk survey for the upcoming game Purple Shift.",
+        content: "v26.07.14",
       },
     ],
   }),
@@ -79,7 +79,7 @@ function SurveyPage() {
   if (loading) {
     return (
       <Shell>
-        <p className="text-muted-foreground">// loading survey grid...</p>
+        <p className="text-muted-foreground">// cargando red de encuestas...</p>
       </Shell>
     );
   }
@@ -89,10 +89,10 @@ function SurveyPage() {
       <Shell>
         <div className="panel-cyber p-6 sm:p-8">
           <h2 className="neon-text-red text-lg sm:text-xl mb-3 tracking-widest">
-            ✕ CONNECTION ERROR
+            ✕ ERROR DE CONEXIÓN
           </h2>
           <p className="text-muted-foreground text-sm mb-2">
-            // could not reach the mainframe.
+            // no se pudo conectar con el servidor central.
           </p>
           <pre className="text-xs text-muted-foreground whitespace-pre-wrap">
             {error}
@@ -107,11 +107,11 @@ function SurveyPage() {
       <Shell>
         <div className="panel-cyber p-8 text-center">
           <p className="text-muted-foreground">
-            // no questions configured. visit{" "}
+            // no hay preguntas configuradas. visita{" "}
             <a href="/admin" className="neon-text-blue">
               /admin
             </a>{" "}
-            to set them up.
+            para configurarlas.
           </p>
         </div>
       </Shell>
@@ -123,10 +123,10 @@ function SurveyPage() {
       <Shell>
         <div className="slide-in text-center">
           <h1 className="neon-text-purple text-4xl sm:text-5xl font-bold mb-4 flicker">
-            TRANSMISSION RECEIVED
+            TRANSMISIÓN RECIBIDA
           </h1>
           <p className="text-muted-foreground mb-8">
-            // your input has been logged to the mainframe.
+            // tu respuesta ha sido registrada en el servidor central.
           </p>
           <button
             className="btn-neon-blue px-8 py-3"
@@ -136,7 +136,7 @@ function SurveyPage() {
               setDone(false);
             }}
           >
-            New Operator
+            Nuevo Operador
           </button>
         </div>
       </Shell>
@@ -165,12 +165,12 @@ function Shell({ children }: { children: React.ReactNode }) {
             ::SHIFT
           </span>
           <div className="text-[10px] text-muted-foreground tracking-widest mt-0.5">
-            OPERATOR SURVEY v0.1
+            Encuesta de Playtest de la versión v26.07.14
           </div>
         </div>
         <a
           href="/admin"
-          className="text-xs text-muted-foreground hover:neon-text-blue tracking-widest"
+          className="text-xs text-muted-foreground hover:neon-text-blue tracking-widest uppercase"
         >
           [ ADMIN ]
         </a>
@@ -188,7 +188,7 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
     <div className="mb-6 sm:mb-8">
       <div className="flex justify-between text-[10px] tracking-widest text-muted-foreground mb-2">
         <span>
-          QUERY {String(current).padStart(2, "0")} /{" "}
+          PREGUNTA {String(current).padStart(2, "0")} /{" "}
           {String(total).padStart(2, "0")}
         </span>
         <span className="neon-text-blue">{Math.round(pct)}%</span>
@@ -253,7 +253,7 @@ function TextQuestion({
       <input
         autoFocus
         className="input-cyber w-full text-base sm:text-lg"
-        placeholder="enter response..."
+        placeholder="introduce tu respuesta..."
         value={val}
         onChange={(e) => setVal(e.target.value)}
         onKeyDown={(e) => {
@@ -267,7 +267,7 @@ function TextQuestion({
           disabled={!val.trim() || disabled}
           onClick={() => onAnswer(val.trim())}
         >
-          Transmit →
+          Transmitir →
         </button>
       </div>
     </div>
@@ -295,8 +295,8 @@ function ChoiceQuestion({
               key={c}
               onClick={() => setSelected(c)}
               className={`w-full text-left px-4 py-3 sm:px-5 sm:py-4 border transition-all tracking-wide ${isSel
-                  ? "neon-border-purple neon-text-purple"
-                  : "border-border hover:border-primary/60"
+                ? "neon-border-purple neon-text-purple"
+                : "border-border hover:border-primary/60"
                 }`}
             >
               <span className="text-muted-foreground mr-3">[{isSel ? "■" : " "}]</span>
@@ -311,7 +311,7 @@ function ChoiceQuestion({
           disabled={!selected || disabled}
           onClick={() => selected && onAnswer(selected)}
         >
-          Confirm →
+          Confirmar →
         </button>
       </div>
     </div>
@@ -408,7 +408,7 @@ function GalleryQuestion({
     return (
       <div className="panel-cyber p-8 text-center">
         <Prompt>{q.text_prompt}</Prompt>
-        <p className="text-muted-foreground">// fetching level data...</p>
+        <p className="text-muted-foreground">// obteniendo datos de niveles...</p>
       </div>
     );
   }
@@ -418,13 +418,13 @@ function GalleryQuestion({
       <div className="panel-cyber p-8 text-center">
         <Prompt>{q.text_prompt}</Prompt>
         <p className="text-muted-foreground mb-6">
-          // no level data uploaded yet. visit /admin to load levels.
+          // aún no se han subido datos de niveles. visita /admin para cargarlos.
         </p>
         <button
           className="btn-neon-blue px-6 py-2"
           onClick={() => onAnswer("__skipped__")}
         >
-          Skip →
+          Saltar →
         </button>
       </div>
     );
@@ -452,7 +452,7 @@ function GalleryQuestion({
           onClick={scrollPrev}
           disabled={focusedIdx === 0}
           className="absolute left-0 sm:left-4 top-1/2 -translate-y-1/2 btn-neon-blue p-2 w-10 h-10 sm:w-12 sm:h-12 rounded-full disabled:opacity-20 disabled:cursor-not-allowed z-10"
-          aria-label="Previous level"
+          aria-label="Nivel anterior"
         >
           {"<"}
         </button>
@@ -460,14 +460,14 @@ function GalleryQuestion({
           onClick={scrollNext}
           disabled={focusedIdx === options.length - 1}
           className="absolute right-0 sm:right-4 top-1/2 -translate-y-1/2 btn-neon-blue p-2 w-10 h-10 sm:w-12 sm:h-12 rounded-full disabled:opacity-20 disabled:cursor-not-allowed z-10"
-          aria-label="Next level"
+          aria-label="Siguiente nivel"
         >
           {">"}
         </button>
       </div>
       <div className="mt-4 sm:mt-6 text-center">
         <div className="text-[10px] tracking-widest text-muted-foreground mb-3">
-          SELECTED // {focusedIdx + 1} OF {options.length}
+          SELECCIONADO // {focusedIdx + 1} DE {options.length}
         </div>
         <div className="h-8 mb-3 text-lg neon-text-purple font-bold tracking-widest transition-opacity duration-300">
           {focused?.title}
@@ -477,7 +477,7 @@ function GalleryQuestion({
           disabled={disabled || !focused}
           onClick={() => focused && onAnswer(focused.id)}
         >
-          ▶ Vote For This Level
+          ▶ Votar por este Nivel
         </button>
       </div>
     </div>
@@ -488,9 +488,8 @@ function LevelCard({ opt, active }: { opt: LevelOption; active: boolean }) {
   return (
     <div
       data-card
-      className={`snap-center shrink-0 w-[320px] sm:w-[480px] md:w-[600px] flex justify-center transition-all duration-300 ${
-        active ? "scale-100 opacity-100" : "scale-90 opacity-60"
-      }`}
+      className={`snap-center shrink-0 w-[320px] sm:w-[480px] md:w-[600px] flex justify-center transition-all duration-300 ${active ? "scale-100 opacity-100" : "scale-90 opacity-60"
+        }`}
     >
       {opt.image_url ? (
         <img
@@ -500,7 +499,7 @@ function LevelCard({ opt, active }: { opt: LevelOption; active: boolean }) {
         />
       ) : (
         <div className="min-h-48 w-full bg-muted flex items-center justify-center text-muted-foreground">
-          no image
+          sin imagen
         </div>
       )}
     </div>
