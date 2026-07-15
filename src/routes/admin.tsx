@@ -152,6 +152,9 @@ function AdminConsole({ onLock }: { onLock: () => void }) {
           <span className="neon-text-red text-xl font-bold tracking-[0.3em] ml-1">::CONSOLA</span>
         </div>
         <div className="flex gap-3">
+          <a href="/admin/responses" className="btn-neon-blue px-4 py-2 text-xs">
+            Ver Respuestas
+          </a>
           <a href="/" className="btn-neon-blue px-4 py-2 text-xs">Ver Encuesta</a>
           <button onClick={onLock} className="btn-neon-red px-4 py-2 text-xs">Bloquear</button>
         </div>

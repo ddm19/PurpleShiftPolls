@@ -177,7 +177,7 @@ export async function duplicateQuestion(originalQuestionId: string): Promise<Que
   // 4. Duplicar opciones de nivel y sus imágenes.
   if (originalOptions.length > 0) {
     const newOptionsPayload = await Promise.all(originalOptions.map(async (opt) => {
-      const { id: _optId, question_id: _qId, created_at: _optCreatedAt, ...restOfOption } = opt
+      const { id: _optId, question_id: _qId, created_at: _optCreatedAt, ...restOfOption } = opt;
       const newOptionId = uid();
       let newImagePath = null;
       let newImageUrl = opt.image_url; // Mantener la URL si no hay path
@@ -247,7 +247,7 @@ export async function uploadQuestionImage(
   return { image_url: data.publicUrl, image_path: path };
 }
 
-export async function addOptions(newOpts: LevelOption[]): Promise<void> {
+export async function addOptions(newOpts: Partial<LevelOption>[]): Promise<void> {
   if (newOpts.length === 0) return;
   const { error } = await supabase.from("level_options").insert(
     newOpts.map((o) => ({
@@ -307,4 +307,10 @@ export async function addToMailingList(email: string): Promise<void> {
   if (error && error.code !== '23505') {
     throw error;
   }
+}
+
+export async function getAllResponses(): Promise<Response[]> {
+  const { data, error } = await supabase.from("responses").select("*");
+  if (error) throw error;
+  return (data ?? []) as Response[];
 }

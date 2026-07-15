@@ -188,15 +188,10 @@ function MailingListSignup({
     return (
       <Shell>
         <div className="slide-in text-center">
-          <h1 className="neon-text-purple text-4xl sm:text-5xl font-bold mb-4 flicker">
-            GRACIAS, OPERADOR
-          </h1>
-          <p className="text-muted-foreground mb-8">
-            // tu contribución ha sido registrada.
+          <p className="text-muted-foreground">
+            Gracias por completar la encuesta.
           </p>
-          <button className="btn-neon-blue px-8 py-3" onClick={onReset}>
-            Nuevo Operador
-          </button>
+
         </div>
       </Shell>
     );
