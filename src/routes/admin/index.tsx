@@ -15,7 +15,7 @@ import {
   upsertQuestion, deleteOption,
 } from "@/lib/store";
 
-export const Route = createFileRoute("/admin")({
+export const Route = createFileRoute("/admin/")({
   head: () => ({
     meta: [
       { title: "Purple Shift — Consola de Administración" },
@@ -344,14 +344,16 @@ function QuestionEditor({
   onCancel: () => void;
 }) {
   const [q, setQ] = useState<Question>(question);
-  const [choicesText, setChoicesText] = useState((question.choices ?? []).join("\n"));
+  const [choicesText, setChoicesText] = useState((question.choices ?? []).join("
+"));
 
   const save = () => {
     const cleaned: Question = {
       ...q,
       choices:
         q.type === "multiple_choice"
-          ? choicesText.split("\n").map((s) => s.trim()).filter(Boolean)
+          ? choicesText.split("
+").map((s) => s.trim()).filter(Boolean)
           : [],
     };
     onSave(cleaned);
@@ -401,7 +403,9 @@ function QuestionEditor({
             rows={4}
             value={choicesText}
             onChange={(e) => setChoicesText(e.target.value)}
-            placeholder={"Opción A\nOpción B\nOpción C"}
+            placeholder={"Opción A
+Opción B
+Opción C"}
           />
         </div>
       )}
@@ -638,7 +642,7 @@ function Label({ children }: { children: React.ReactNode }) {
 interface PendingUpload {
   id: string;
   file: File;
-  title: string;
+  title:.tsx string;
   preview: string;
 }
 
