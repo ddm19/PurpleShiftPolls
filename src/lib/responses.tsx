@@ -215,7 +215,7 @@ function QuestionAnalytics({ question, responses }: { question: Question, respon
 
     if (question.type === 'text' || question.type === 'numeric') {
         return (
-            <div className="max-h-48 overflow-y-auto space-y-1 rounded-sm bg-black/20 p-2">
+            <div className="max-h-48 overflow-y-auto space-y-1 text-sm bg-black/20 p-2">
                 {responses.filter(r => r.answer).map(r => (
                     <p key={r.id} className="border-b border-border/20 pb-1">
                         {r.answer}
