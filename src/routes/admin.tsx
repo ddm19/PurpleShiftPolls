@@ -223,6 +223,21 @@ function AdminConsole({ onLock }: { onLock: () => void }) {
                   setError(e?.message ?? String(e));
                 }
               }}
+              onDuplicate={async () => {
+                if (!confirm(`¿Duplicar "${q.text_prompt}"?`)) return;
+                try {
+                  const newQuestion = await duplicateQuestion(q.id);
+                  const originalIndex = questions.findIndex(x => x.id === q.id);
+                  const reordered = [...questions];
+                  if (originalIndex !== -1) {
+                    reordered.splice(originalIndex + 1, 0, newQuestion);
+                  }
+                  await reorderQuestions(reordered);
+                  await refresh();
+                } catch (e: any) {
+                  setError(e?.message ?? String(e));
+                }
+              }}
               onDragStart={() => setDraggedIndex(i)}
               onDragEnd={() => {
                 setDraggedIndex(null);

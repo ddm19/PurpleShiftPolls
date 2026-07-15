@@ -148,6 +148,7 @@ export async function duplicateQuestion(originalQuestionId: string): Promise<Que
   const newQuestionPayload = {
     ...restOfQuestion,
     text_prompt: `${original.text_prompt} (Copia)`,
+    order: original.order,
   };
 
   const { data: newQuestion, error: insertError } = await supabase
