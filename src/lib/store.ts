@@ -91,6 +91,115 @@ export async function deleteQuestion(id: string): Promise<void> {
   if (error) throw error;
 }
 
+/**
+ * Construye una nueva ruta para un objeto de Storage copiado.
+ * Prefija la ruta con el ID de la nueva pregunta para mantener la organización y evitar colisiones.
+ * @param oldPath - La ruta original del archivo.
+ * @param newOwnerId - El ID del nuevo propietario del archivo (ej. newQuestionId).
+ * @returns La nueva ruta para el objeto en Storage.
+ */
+function buildNewPath(oldPath: string, newOwnerId: string): string {
+  const fileName = oldPath.split('/').pop() || 'unknown_file';
+  // newOwnerId/copy-random-originalName.ext
+  return `${newOwnerId}/copy-${uid()}-${fileName}`;
+}
+
+/**
+ * Copia un objeto en Supabase Storage y devuelve su nueva ruta y URL pública.
+ * @throws Un error descriptivo si la copia falla, sugiriendo problemas de RLS.
+ */
+async function copyStorageObject(
+  bucket: string,
+  oldPath: string,
+  newPath: string,
+): Promise<{ newPath: string; publicUrl: string }> {
+  const { error: copyError } = await supabase.storage.from(bucket).copy(oldPath, newPath);
+
+  if (copyError) {
+    throw new Error(
+      `Error al copiar la imagen en Storage (de '${oldPath}' a '${newPath}' en el bucket '${bucket}').\n` +
+      `Causa probable: Políticas de Row Level Security (RLS) en el bucket.\n` +
+      `Asegúrate de que la política de INSERT permite la operación 'copy' para usuarios autenticados.\n` +
+      `Si no es posible, esta operación debe realizarse desde una Edge Function con 'service_role'.\n` +
+      `Error original: ${copyError.message}`,
+    );
+  }
+
+  const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(newPath);
+  return { newPath, publicUrl: urlData.publicUrl };
+}
+
+export async function duplicateQuestion(originalQuestionId: string): Promise<Question> {
+  // 1. Obtener la pregunta original y sus opciones de nivel.
+  const { data: original, error: qError } = await supabase
+    .from("questions")
+    .select("*")
+    .eq("id", originalQuestionId)
+    .single();
+
+  if (qError || !original) throw qError ?? new Error("Question not found");
+
+  const originalOptions = original.type === 'level_gallery'
+    ? await getOptionsForQuestion(originalQuestionId)
+    : [];
+
+  // 2. Crear la nueva pregunta en la base de datos.
+  const { id: _id, created_at: _createdAt, order: _order, ...restOfQuestion } = original;
+  const newQuestionPayload = {
+    ...restOfQuestion,
+    text_prompt: `${original.text_prompt} (Copia)`,
+  };
+
+  const { data: newQuestion, error: insertError } = await supabase
+    .from('questions')
+    .insert(newQuestionPayload)
+    .select()
+    .single();
+
+  if (insertError || !newQuestion) throw insertError ?? new Error("Failed to create new question.");
+
+  // 3. Duplicar imágenes adjuntas a la pregunta.
+  if (original.image_paths?.length > 0) {
+    const copiedImages = await Promise.all(
+      original.image_paths.map(p => copyStorageObject('question_images', p, buildNewPath(p, newQuestion.id)))
+    );
+    await supabase.from('questions').update({
+      image_paths: copiedImages.map(img => img.newPath),
+      image_urls: copiedImages.map(img => img.publicUrl),
+    }).eq('id', newQuestion.id);
+  }
+
+  // 4. Duplicar opciones de nivel y sus imágenes.
+  if (originalOptions.length > 0) {
+    const newOptionsPayload = await Promise.all(originalOptions.map(async (opt) => {
+      const { id: _optId, question_id: _qId, created_at: _optCreatedAt, ...restOfOption } = opt;
+      let newImagePath = null;
+      let newImageUrl = opt.image_url; // Mantener la URL si no hay path
+
+      if (opt.image_path) {
+        const { newPath, publicUrl } = await copyStorageObject(LEVELS_BUCKET, opt.image_path, buildNewPath(opt.image_path, newQuestion.id));
+        newImagePath = newPath;
+        newImageUrl = publicUrl;
+      }
+
+      return {
+        ...restOfOption,
+        id: uid(),
+        question_id: newQuestion.id,
+        image_path: newImagePath,
+        image_url: newImageUrl,
+      };
+    }));
+
+    const { error: optionsError } = await supabase.from('level_options').insert(newOptionsPayload);
+    if (optionsError) {
+      console.warn(`ADVERTENCIA: La pregunta se duplicó (ID: ${newQuestion.id}) pero falló la inserción de sus level_options. Error: ${optionsError.message}`);
+    }
+  }
+
+  return newQuestion as Question;
+}
+
 export async function reorderQuestions(qs: Question[]): Promise<void> {
   // Persist new order values.
   const updates = qs.map((q, i) =>

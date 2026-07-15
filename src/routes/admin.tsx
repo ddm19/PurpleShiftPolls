@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   addOptions,
+  duplicateQuestion,
   deleteQuestion,
   getOptionsForQuestion,
   getQuestions,
@@ -254,6 +255,7 @@ function QuestionRow({
   onEdit,
   onDelete,
   onMove,
+  onDuplicate,
   onDragStart,
   onDragEnd,
   onDragEnter,
@@ -265,6 +267,7 @@ function QuestionRow({
   onEdit: () => void;
   onDelete: () => void;
   onMove: (dir: -1 | 1) => void;
+  onDuplicate: () => void;
   onDragStart: () => void;
   onDragEnd: () => void;
   onDragEnter: () => void;
@@ -300,6 +303,9 @@ function QuestionRow({
         </button>
         <button className="btn-neon-blue px-3 py-1 text-xs" onClick={onEdit}>
           Editar
+        </button>
+        <button className="btn-neon-blue px-3 py-1 text-xs" onClick={onDuplicate}>
+          Duplicar
         </button>
         <button className="btn-neon-red px-3 py-1 text-xs" onClick={onDelete}>
           Borrar
