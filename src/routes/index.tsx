@@ -4,6 +4,8 @@ import {
   getOptionsForQuestion,
   getQuestions,
   addResponses,
+  addToMailingList,
+  uid,
   type Question,
   type LevelOption,
 } from "@/lib/store";
@@ -35,6 +37,8 @@ function SurveyPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [userId, setUserId] = useState("");
+  const [mailingListSubmitted, setMailingListSubmitted] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -50,6 +54,13 @@ function SurveyPage() {
     };
   }, []);
 
+  useEffect(() => {
+    // Generate a new user ID only when a new survey starts (when `done` becomes false)
+    if (!done) {
+      setUserId(uid());
+    }
+  }, [done]);
+
   const current = questions[idx];
 
   const next = async (value: string) => {
@@ -59,7 +70,7 @@ function SurveyPage() {
     if (idx + 1 >= questions.length) {
       try {
         setSubmitting(true);
-        await addResponses(
+        await addResponses(userId,
           Object.entries(updated).map(([question_id, answer]) => ({
             question_id,
             answer,
@@ -120,22 +131,70 @@ function SurveyPage() {
 
   if (done) {
     return (
+      <MailingListSignup
+        onReset={() => {
+          setAnswers({});
+          setIdx(0);
+          setDone(false);
+          setMailingListSubmitted(false);
+        }}
+        submitted={mailingListSubmitted}
+        onSubmitted={() => setMailingListSubmitted(true)}
+      />
+    );
+  }
+
+  return (
+    <Shell>
+      <ProgressBar current={idx + 1} total={questions.length} />
+      <div key={current.id} className="slide-in">
+        <QuestionView question={current} onAnswer={next} disabled={submitting} />
+      </div>
+    </Shell>
+  );
+}
+
+function MailingListSignup({
+  submitted,
+  onSubmitted,
+  onReset,
+}: {
+  submitted: boolean;
+  onSubmitted: () => void;
+  onReset: () => void;
+}) {
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async () => {
+    if (!email.trim() || !email.includes('@')) {
+      setError("Por favor, introduce un correo electrónico válido.");
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      await addToMailingList(email);
+      onSubmitted();
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (submitted) {
+    return (
       <Shell>
         <div className="slide-in text-center">
           <h1 className="neon-text-purple text-4xl sm:text-5xl font-bold mb-4 flicker">
-            TRANSMISIÓN RECIBIDA
+            GRACIAS, OPERADOR
           </h1>
           <p className="text-muted-foreground mb-8">
-            // tu respuesta ha sido registrada en el servidor central.
+            // tu contribución ha sido registrada.
           </p>
-          <button
-            className="btn-neon-blue px-8 py-3"
-            onClick={() => {
-              setAnswers({});
-              setIdx(0);
-              setDone(false);
-            }}
-          >
+          <button className="btn-neon-blue px-8 py-3" onClick={onReset}>
             Nuevo Operador
           </button>
         </div>
@@ -145,9 +204,30 @@ function SurveyPage() {
 
   return (
     <Shell>
-      <ProgressBar current={idx + 1} total={questions.length} />
-      <div key={current.id} className="slide-in">
-        <QuestionView question={current} onAnswer={next} disabled={submitting} />
+      <div className="slide-in text-center max-w-2xl mx-auto">
+        <h1 className="neon-text-purple text-3xl sm:text-4xl font-bold mb-4">
+          Gracias por completar la encuesta
+        </h1>
+        <p className="text-muted-foreground mb-6">
+          ¿Te gustaría saber más sobre Purple Shift? Anótate en nuestra lista de correo para recibir noticias y actualizaciones.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <input
+            type="email"
+            className="input-cyber flex-1 text-center sm:text-left"
+            placeholder="tu-correo@electronico.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={loading}
+          />
+          <button className="btn-neon-purple px-6 py-3" onClick={handleSubmit} disabled={loading}>
+            {loading ? "Enviando..." : "Suscribirme"}
+          </button>
+        </div>
+        {error && <p className="text-red-400 text-xs mt-2">{error}</p>}
+        <button className="text-xs text-muted-foreground hover:neon-text-blue tracking-widest mt-8" onClick={onSubmitted}>
+          No, gracias
+        </button>
       </div>
     </Shell>
   );

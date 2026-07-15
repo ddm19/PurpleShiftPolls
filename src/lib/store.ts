@@ -8,6 +8,7 @@ export interface LevelOption {
   title: string;
   image_url: string;
   image_path?: string | null;
+  created_at: string;
 }
 
 export interface Question {
@@ -30,6 +31,7 @@ export interface Question {
 export interface Response {
   id: string;
   question_id: string;
+  user_id: string;
   answer: string | null;
   created_at: string;
 }
@@ -175,19 +177,20 @@ export async function duplicateQuestion(originalQuestionId: string): Promise<Que
   // 4. Duplicar opciones de nivel y sus imágenes.
   if (originalOptions.length > 0) {
     const newOptionsPayload = await Promise.all(originalOptions.map(async (opt) => {
-      const { id: _optId, question_id: _qId, created_at: _optCreatedAt, ...restOfOption } = opt;
+      const { id: _optId, question_id: _qId, created_at: _optCreatedAt, ...restOfOption } = opt
+      const newOptionId = uid();
       let newImagePath = null;
       let newImageUrl = opt.image_url; // Mantener la URL si no hay path
 
       if (opt.image_path) {
-        const { newPath, publicUrl } = await copyStorageObject(LEVELS_BUCKET, opt.image_path, buildNewPath(opt.image_path, newQuestion.id));
+        const { newPath, publicUrl } = await copyStorageObject(LEVELS_BUCKET, opt.image_path, buildNewPath(opt.image_path, newOptionId));
         newImagePath = newPath;
         newImageUrl = publicUrl;
       }
 
       return {
         ...restOfOption,
-        id: uid(),
+        id: newOptionId,
         question_id: newQuestion.id,
         image_path: newImagePath,
         image_url: newImageUrl,
@@ -217,7 +220,7 @@ export async function reorderQuestions(qs: Question[]): Promise<void> {
 export async function getOptionsForQuestion(qid: string): Promise<LevelOption[]> {
   const { data, error } = await supabase
     .from("level_options")
-    .select("id, question_id, title, image_url, image_path")
+    .select("id, question_id, title, image_url, image_path, created_at")
     .eq("question_id", qid)
     .order("created_at", { ascending: true });
   if (error) throw error;
@@ -283,11 +286,25 @@ export async function deleteOption(id: string): Promise<void> {
 // ---------- Responses ----------
 
 export async function addResponses(
-  rs: Omit<Response, "id" | "created_at">[],
+  user_id: string,
+  rs: Omit<Response, "id" | "created_at" | "user_id">[],
 ): Promise<void> {
   if (rs.length === 0) return; // No hay respuestas para añadir
   const { error } = await supabase.from("responses").insert(
-    rs.map((r) => ({ question_id: r.question_id, answer: r.answer })),
+    rs.map((r) => ({
+      question_id: r.question_id,
+      answer: r.answer,
+      user_id: user_id,
+    })),
   );
   if (error) throw error;
+}
+
+export async function addToMailingList(email: string): Promise<void> {
+  if (!email.trim() || !email.includes('@')) return;
+  const { error } = await supabase.from("mailing_list").insert({ email });
+  // Ignore duplicate errors, succeed silently.
+  if (error && error.code !== '23505') {
+    throw error;
+  }
 }
