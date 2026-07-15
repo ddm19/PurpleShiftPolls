@@ -37,15 +37,17 @@ export interface Response {
 }
 
 export const uid = () =>
-  (globalThis.crypto?.randomUUID?.() ??
-    `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 11)}`);
+  globalThis.crypto?.randomUUID?.() ??
+  `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 11)}`;
 
 // ---------- Questions ----------
 
 export async function getQuestions(): Promise<Question[]> {
   const { data, error } = await supabase
     .from("questions")
-    .select("id, type, text_prompt, order, choices, is_optional, image_urls, image_paths, slider_min, slider_max, slider_left_label, slider_right_label, slider_labels")
+    .select(
+      "id, type, text_prompt, order, choices, is_optional, image_urls, image_paths, slider_min, slider_max, slider_left_label, slider_right_label, slider_labels",
+    )
     .order("order", { ascending: true });
   if (error) throw error;
   return (data ?? []) as Question[];
@@ -57,7 +59,7 @@ export async function upsertQuestion(q: Question): Promise<void> {
     type: q.type,
     text_prompt: q.text_prompt,
     order: q.order,
-    choices: q.type === "multiple_choice" ? q.choices ?? [] : null,
+    choices: q.type === "multiple_choice" ? (q.choices ?? []) : null,
     is_optional: q.is_optional,
     image_urls: q.image_urls,
     image_paths: q.image_paths,
@@ -103,7 +105,7 @@ export async function deleteQuestion(id: string): Promise<void> {
  * @returns La nueva ruta para el objeto en Storage.
  */
 function buildNewPath(oldPath: string, newOwnerId: string): string {
-  const fileName = oldPath.split('/').pop() || 'unknown_file';
+  const fileName = oldPath.split("/").pop() || "unknown_file";
   // newOwnerId/copy-random-originalName.ext
   return `${newOwnerId}/copy-${uid()}-${fileName}`;
 }
@@ -122,10 +124,10 @@ async function copyStorageObject(
   if (copyError) {
     throw new Error(
       `Error al copiar la imagen en Storage (de '${oldPath}' a '${newPath}' en el bucket '${bucket}').\n` +
-      `Causa probable: Políticas de Row Level Security (RLS) en el bucket.\n` +
-      `Asegúrate de que la política de INSERT permite la operación 'copy' para usuarios autenticados.\n` +
-      `Si no es posible, esta operación debe realizarse desde una Edge Function con 'service_role'.\n` +
-      `Error original: ${copyError.message}`,
+        `Causa probable: Políticas de Row Level Security (RLS) en el bucket.\n` +
+        `Asegúrate de que la política de INSERT permite la operación 'copy' para usuarios autenticados.\n` +
+        `Si no es posible, esta operación debe realizarse desde una Edge Function con 'service_role'.\n` +
+        `Error original: ${copyError.message}`,
     );
   }
 
@@ -143,9 +145,8 @@ export async function duplicateQuestion(originalQuestionId: string): Promise<Que
 
   if (qError || !original) throw qError ?? new Error("Question not found");
 
-  const originalOptions = original.type === 'level_gallery'
-    ? await getOptionsForQuestion(originalQuestionId)
-    : [];
+  const originalOptions =
+    original.type === "level_gallery" ? await getOptionsForQuestion(originalQuestionId) : [];
 
   // 2. Crear la nueva pregunta en la base de datos.
   const { id: _id, created_at: _createdAt, order: _order, ...restOfQuestion } = original;
@@ -156,7 +157,7 @@ export async function duplicateQuestion(originalQuestionId: string): Promise<Que
   };
 
   const { data: newQuestion, error: insertError } = await supabase
-    .from('questions')
+    .from("questions")
     .insert(newQuestionPayload)
     .select()
     .single();
@@ -166,40 +167,53 @@ export async function duplicateQuestion(originalQuestionId: string): Promise<Que
   // 3. Duplicar imágenes adjuntas a la pregunta.
   if (original.image_paths?.length > 0) {
     const copiedImages = await Promise.all(
-      original.image_paths.map(p => copyStorageObject('question_images', p, buildNewPath(p, newQuestion.id)))
+      original.image_paths.map((p: string) =>
+        copyStorageObject("question_images", p, buildNewPath(p, newQuestion.id)),
+      ),
     );
-    await supabase.from('questions').update({
-      image_paths: copiedImages.map(img => img.newPath),
-      image_urls: copiedImages.map(img => img.publicUrl),
-    }).eq('id', newQuestion.id);
+    await supabase
+      .from("questions")
+      .update({
+        image_paths: copiedImages.map((img) => img.newPath),
+        image_urls: copiedImages.map((img) => img.publicUrl),
+      })
+      .eq("id", newQuestion.id);
   }
 
   // 4. Duplicar opciones de nivel y sus imágenes.
   if (originalOptions.length > 0) {
-    const newOptionsPayload = await Promise.all(originalOptions.map(async (opt) => {
-      const { id: _optId, question_id: _qId, created_at: _optCreatedAt, ...restOfOption } = opt
-      const newOptionId = uid();
-      let newImagePath = null;
-      let newImageUrl = opt.image_url; // Mantener la URL si no hay path
+    const newOptionsPayload = await Promise.all(
+      originalOptions.map(async (opt) => {
+        const { id: _optId, question_id: _qId, created_at: _optCreatedAt, ...restOfOption } = opt;
+        const newOptionId = uid();
+        let newImagePath = null;
+        let newImageUrl = opt.image_url; // Mantener la URL si no hay path
 
-      if (opt.image_path) {
-        const { newPath, publicUrl } = await copyStorageObject(LEVELS_BUCKET, opt.image_path, buildNewPath(opt.image_path, newOptionId));
-        newImagePath = newPath;
-        newImageUrl = publicUrl;
-      }
+        if (opt.image_path) {
+          const { newPath, publicUrl } = await copyStorageObject(
+            LEVELS_BUCKET,
+            opt.image_path,
+            buildNewPath(opt.image_path, newOptionId),
+          );
+          newImagePath = newPath;
+          newImageUrl = publicUrl;
+        }
 
-      return {
-        ...restOfOption,
-        id: newOptionId,
-        question_id: newQuestion.id,
-        image_path: newImagePath,
-        image_url: newImageUrl,
-      };
-    }));
+        return {
+          ...restOfOption,
+          id: newOptionId,
+          question_id: newQuestion.id,
+          image_path: newImagePath,
+          image_url: newImageUrl,
+        };
+      }),
+    );
 
-    const { error: optionsError } = await supabase.from('level_options').insert(newOptionsPayload);
+    const { error: optionsError } = await supabase.from("level_options").insert(newOptionsPayload);
     if (optionsError) {
-      console.warn(`ADVERTENCIA: La pregunta se duplicó (ID: ${newQuestion.id}) pero falló la inserción de sus level_options. Error: ${optionsError.message}`);
+      console.warn(
+        `ADVERTENCIA: La pregunta se duplicó (ID: ${newQuestion.id}) pero falló la inserción de sus level_options. Error: ${optionsError.message}`,
+      );
     }
   }
 
@@ -209,7 +223,10 @@ export async function duplicateQuestion(originalQuestionId: string): Promise<Que
 export async function reorderQuestions(qs: Question[]): Promise<void> {
   // Persist new order values.
   const updates = qs.map((q, i) =>
-    supabase.from("questions").update({ order: i + 1 }).eq("id", q.id),
+    supabase
+      .from("questions")
+      .update({ order: i + 1 })
+      .eq("id", q.id),
   );
   const results = await Promise.all(updates);
   for (const r of results) if (r.error) throw r.error;
@@ -229,17 +246,15 @@ export async function getOptionsForQuestion(qid: string): Promise<LevelOption[]>
 
 export async function uploadQuestionImage(
   file: File,
-  bucketName: string = LEVELS_BUCKET
+  bucketName: string = LEVELS_BUCKET,
 ): Promise<{ image_url: string; image_path: string }> {
   const ext = file.name.split(".").pop()?.toLowerCase() || "png";
   const path = `${uid()}.${ext}`;
 
-  const { error } = await supabase.storage
-    .from(bucketName)
-    .upload(path, file, {
-      contentType: file.type || `image/${ext}`,
-      upsert: false,
-    });
+  const { error } = await supabase.storage.from(bucketName).upload(path, file, {
+    contentType: file.type || `image/${ext}`,
+    upsert: false,
+  });
 
   if (error) throw error;
 
@@ -301,10 +316,10 @@ export async function addResponses(
 }
 
 export async function addToMailingList(email: string): Promise<void> {
-  if (!email.trim() || !email.includes('@')) return;
+  if (!email.trim() || !email.includes("@")) return;
   const { error } = await supabase.from("mailing_list").insert({ email });
   // Ignore duplicate errors, succeed silently.
-  if (error && error.code !== '23505') {
+  if (error && error.code !== "23505") {
     throw error;
   }
 }

@@ -70,15 +70,16 @@ function SurveyPage() {
     if (idx + 1 >= questions.length) {
       try {
         setSubmitting(true);
-        await addResponses(userId,
+        await addResponses(
+          userId,
           Object.entries(updated).map(([question_id, answer]) => ({
             question_id,
             answer,
           })),
         );
         setDone(true);
-      } catch (e: any) {
-        setError(e?.message ?? String(e));
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : String(e));
       } finally {
         setSubmitting(false);
       }
@@ -105,9 +106,7 @@ function SurveyPage() {
           <p className="text-muted-foreground text-sm mb-2">
             // no se pudo conectar con el servidor central.
           </p>
-          <pre className="text-xs text-muted-foreground whitespace-pre-wrap">
-            {error}
-          </pre>
+          <pre className="text-xs text-muted-foreground whitespace-pre-wrap">{error}</pre>
         </div>
       </Shell>
     );
@@ -168,7 +167,7 @@ function MailingListSignup({
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
-    if (!email.trim() || !email.includes('@')) {
+    if (!email.trim() || !email.includes("@")) {
       setError("Por favor, introduce un correo electrónico válido.");
       return;
     }
@@ -177,8 +176,8 @@ function MailingListSignup({
     try {
       await addToMailingList(email);
       onSubmitted();
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e));
     } finally {
       setLoading(false);
     }
@@ -188,10 +187,7 @@ function MailingListSignup({
     return (
       <Shell>
         <div className="slide-in text-center">
-          <p className="text-muted-foreground">
-            Gracias por completar la encuesta.
-          </p>
-
+          <p className="text-muted-foreground">Gracias por completar la encuesta.</p>
         </div>
       </Shell>
     );
@@ -204,7 +200,8 @@ function MailingListSignup({
           Gracias por completar la encuesta
         </h1>
         <p className="text-muted-foreground mb-6">
-          ¿Te gustaría saber más sobre Purple Shift? Anótate en nuestra lista de correo para recibir noticias y actualizaciones.
+          ¿Te gustaría saber más sobre Purple Shift? Anótate en nuestra lista de correo para recibir
+          noticias y actualizaciones.
         </p>
         <div className="flex flex-col sm:flex-row gap-3">
           <input
@@ -220,7 +217,10 @@ function MailingListSignup({
           </button>
         </div>
         {error && <p className="text-red-400 text-xs mt-2">{error}</p>}
-        <button className="text-xs text-muted-foreground hover:neon-text-blue tracking-widest mt-8" onClick={onSubmitted}>
+        <button
+          className="text-xs text-muted-foreground hover:neon-text-blue tracking-widest mt-8"
+          onClick={onSubmitted}
+        >
           No, gracias
         </button>
       </div>
@@ -260,8 +260,7 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
     <div className="mb-6 sm:mb-8">
       <div className="flex justify-between text-[10px] tracking-widest text-muted-foreground mb-2">
         <span>
-          PREGUNTA {String(current).padStart(2, "0")} /{" "}
-          {String(total).padStart(2, "0")}
+          PREGUNTA {String(current).padStart(2, "0")} / {String(total).padStart(2, "0")}
         </span>
         <span className="neon-text-blue">{Math.round(pct)}%</span>
       </div>
@@ -294,14 +293,10 @@ function QuestionView({
   if (question.type === "numeric")
     return <NumericQuestion q={question} onAnswer={onAnswer} disabled={disabled} />;
   if (question.type === "multiple_choice")
-    return (
-      <ChoiceQuestion q={question} onAnswer={onAnswer} disabled={disabled} />
-    );
+    return <ChoiceQuestion q={question} onAnswer={onAnswer} disabled={disabled} />;
   if (question.type === "slider")
     return <SliderQuestion q={question} onAnswer={onAnswer} disabled={disabled} />;
-  return (
-    <GalleryQuestion q={question} onAnswer={onAnswer} disabled={disabled} />
-  );
+  return <GalleryQuestion q={question} onAnswer={onAnswer} disabled={disabled} />;
 }
 
 function QuestionImages({ urls }: { urls?: string[] }) {
@@ -312,9 +307,17 @@ function QuestionImages({ urls }: { urls?: string[] }) {
   return (
     <>
       <div className="mb-4 grid grid-cols-2 gap-3 sm:mb-6 md:grid-cols-4">
-        {urls.map(url => (
-          <button key={url} onClick={() => setZoomedUrl(url)} className="focus:outline-none focus:ring-2 focus:ring-purple-500">
-            <img src={url} alt="Imagen de la pregunta" className="h-auto w-full max-h-48 rounded-sm object-contain" />
+        {urls.map((url) => (
+          <button
+            key={url}
+            onClick={() => setZoomedUrl(url)}
+            className="focus:outline-none focus:ring-2 focus:ring-purple-500"
+          >
+            <img
+              src={url}
+              alt="Imagen de la pregunta"
+              className="h-auto w-full max-h-48 rounded-sm object-contain"
+            />
           </button>
         ))}
       </div>
@@ -372,8 +375,7 @@ function TextQuestion({
         value={val}
         onChange={(e) => setVal(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === "Enter" && val.trim() && !disabled)
-            onAnswer(val.trim());
+          if (e.key === "Enter" && val.trim() && !disabled) onAnswer(val.trim());
         }}
       />
       <div className="mt-6 flex justify-end gap-4">
@@ -384,7 +386,8 @@ function TextQuestion({
             onClick={() => onAnswer("")}
           >
             Saltar →
-          </button>)}
+          </button>
+        )}
         <button
           className="btn-neon-purple px-8 py-3"
           disabled={!val.trim() || disabled}
@@ -420,8 +423,7 @@ function NumericQuestion({
         value={val}
         onChange={(e) => setVal(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === "Enter" && val.trim() && !disabled)
-            onAnswer(val.trim());
+          if (e.key === "Enter" && val.trim() && !disabled) onAnswer(val.trim());
         }}
       />
       <div className="mt-6 flex justify-end gap-4">
@@ -430,12 +432,17 @@ function NumericQuestion({
             className="btn-neon-blue px-6 py-3"
             disabled={disabled}
             onClick={() => onAnswer("")}
-          >Saltar →</button>)}
+          >
+            Saltar →
+          </button>
+        )}
         <button
           className="btn-neon-purple px-8 py-3"
           disabled={!val.trim() || disabled}
           onClick={() => onAnswer(val.trim())}
-        >Transmitir →</button>
+        >
+          Transmitir →
+        </button>
       </div>
     </div>
   );
@@ -462,10 +469,11 @@ function ChoiceQuestion({
             <button
               key={c}
               onClick={() => setSelected(c)}
-              className={`w-full text-left px-4 py-3 sm:px-5 sm:py-4 border transition-all tracking-wide ${isSel
-                ? "neon-border-purple neon-text-purple"
-                : "border-border hover:border-primary/60"
-                }`}
+              className={`w-full text-left px-4 py-3 sm:px-5 sm:py-4 border transition-all tracking-wide ${
+                isSel
+                  ? "neon-border-purple neon-text-purple"
+                  : "border-border hover:border-primary/60"
+              }`}
             >
               <span className="text-muted-foreground mr-3">[{isSel ? "■" : " "}]</span>
               {c}
@@ -481,7 +489,8 @@ function ChoiceQuestion({
             onClick={() => onAnswer("")}
           >
             Saltar →
-          </button>)}
+          </button>
+        )}
         <button
           className="btn-neon-purple px-8 py-3"
           disabled={!selected || disabled}
@@ -533,16 +542,20 @@ function SliderQuestion({
                 {val}
               </div>
             </div>
-            {(q.slider_labels && q.slider_labels.length > 0) && (
+            {q.slider_labels && q.slider_labels.length > 0 && (
               <div className="relative h-6 mt-2">
-                {q.slider_labels.map(label => {
+                {q.slider_labels.map((label) => {
                   const percent = ((label.value - min) / (max - min)) * 100;
                   return (
-                    <div key={label.value} className="absolute text-center text-[10px] text-muted-foreground" style={{ left: `${percent}%`, transform: 'translateX(-50%)' }}>
+                    <div
+                      key={label.value}
+                      className="absolute text-center text-[10px] text-muted-foreground"
+                      style={{ left: `${percent}%`, transform: "translateX(-50%)" }}
+                    >
                       <div className="h-1.5 w-px bg-border/70 mx-auto"></div>
                       {label.label}
                     </div>
-                  )
+                  );
                 })}
               </div>
             )}
@@ -561,12 +574,17 @@ function SliderQuestion({
             className="btn-neon-blue px-6 py-3"
             disabled={disabled}
             onClick={() => onAnswer("")}
-          >Saltar →</button>)}
+          >
+            Saltar →
+          </button>
+        )}
         <button
           className="btn-neon-purple px-8 py-3"
           disabled={disabled}
           onClick={() => onAnswer(String(val))}
-        >Confirmar →</button>
+        >
+          Confirmar →
+        </button>
       </div>
     </div>
   );
@@ -609,7 +627,7 @@ function GalleryQuestion({
   useEffect(() => {
     const container = scrollerRef.current;
     if (!container) return;
-    let timeout: any;
+    let timeout: ReturnType<typeof setTimeout>;
     const onScroll = () => {
       clearTimeout(timeout);
       timeout = setTimeout(() => {
@@ -637,9 +655,7 @@ function GalleryQuestion({
   const scrollTo = (index: number, behavior: "smooth" | "auto" = "smooth") => {
     const container = scrollerRef.current;
     if (!container) return;
-    const card = container.querySelectorAll<HTMLDivElement>("[data-card]")[
-      index
-    ];
+    const card = container.querySelectorAll<HTMLDivElement>("[data-card]")[index];
     if (card) {
       card.scrollIntoView({
         behavior,
@@ -675,12 +691,10 @@ function GalleryQuestion({
           // aún no se han subido datos de niveles. visita /admin para cargarlos.
         </p>
         {q.is_optional && (
-          <button
-            className="btn-neon-blue px-6 py-2"
-            onClick={() => onAnswer("")}
-          >
+          <button className="btn-neon-blue px-6 py-2" onClick={() => onAnswer("")}>
             Saltar →
-          </button>)}
+          </button>
+        )}
       </div>
     );
   }
@@ -736,7 +750,8 @@ function GalleryQuestion({
               onClick={() => onAnswer("")}
             >
               Saltar →
-            </button>)}
+            </button>
+          )}
           <button
             className="btn-neon-purple px-10 py-4 text-base"
             disabled={disabled || !focused}
@@ -754,8 +769,9 @@ function LevelCard({ opt, active }: { opt: LevelOption; active: boolean }) {
   return (
     <div
       data-card
-      className={`snap-center shrink-0 w-[320px] sm:w-[480px] md:w-[600px] flex justify-center transition-all duration-300 ${active ? "scale-100 opacity-100" : "scale-90 opacity-60"
-        }`}
+      className={`snap-center shrink-0 w-[320px] sm:w-[480px] md:w-[600px] flex justify-center transition-all duration-300 ${
+        active ? "scale-100 opacity-100" : "scale-90 opacity-60"
+      }`}
     >
       {opt.image_url ? (
         <img

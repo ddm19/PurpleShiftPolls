@@ -10,16 +10,21 @@ import {
   uid,
   updateOption,
   type LevelOption,
-  type Question, uploadQuestionImage,
+  type Question,
+  uploadQuestionImage,
   type QuestionType,
-  upsertQuestion, deleteOption,
+  upsertQuestion,
+  deleteOption,
 } from "@/lib/store";
 
 export const Route = createFileRoute("/admin/")({
   head: () => ({
     meta: [
       { title: "Purple Shift — Consola de Administración" },
-      { name: "description", content: "Consola de administración para la encuesta de Purple Shift." },
+      {
+        name: "description",
+        content: "Consola de administración para la encuesta de Purple Shift.",
+      },
       { name: "robots", content: "noindex,nofollow" },
     ],
   }),
@@ -87,8 +92,9 @@ function PasswordGate({ onPass }: { onPass: () => void }) {
             setErr(false);
           }}
           onKeyDown={(e) => e.key === "Enter" && submit()}
-          className={`input-cyber w-full text-center text-2xl tracking-[0.5em] ${err ? "neon-border-red" : ""
-            }`}
+          className={`input-cyber w-full text-center text-2xl tracking-[0.5em] ${
+            err ? "neon-border-red" : ""
+          }`}
           placeholder="••••"
         />
         {err && (
@@ -100,7 +106,10 @@ function PasswordGate({ onPass }: { onPass: () => void }) {
           Autenticar
         </button>
         <div className="text-center mt-6">
-          <a href="/" className="text-xs text-muted-foreground hover:neon-text-blue tracking-widest" >
+          <a
+            href="/"
+            className="text-xs text-muted-foreground hover:neon-text-blue tracking-widest"
+          >
             ← VOLVER A LA ENCUESTA
           </a>
         </div>
@@ -119,8 +128,8 @@ function AdminConsole({ onLock }: { onLock: () => void }) {
   const refresh = useCallback(async () => {
     try {
       setQuestions(await getQuestions());
-    } catch (e: any) {
-      setError(e?.message ?? String(e));
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e));
     }
   }, []);
 
@@ -155,8 +164,12 @@ function AdminConsole({ onLock }: { onLock: () => void }) {
           <a href="/admin/responses" className="btn-neon-blue px-4 py-2 text-xs">
             Ver Respuestas
           </a>
-          <a href="/" className="btn-neon-blue px-4 py-2 text-xs">Ver Encuesta</a>
-          <button onClick={onLock} className="btn-neon-red px-4 py-2 text-xs">Bloquear</button>
+          <a href="/" className="btn-neon-blue px-4 py-2 text-xs">
+            Ver Encuesta
+          </a>
+          <button onClick={onLock} className="btn-neon-red px-4 py-2 text-xs">
+            Bloquear
+          </button>
         </div>
       </header>
 
@@ -183,8 +196,8 @@ function AdminConsole({ onLock }: { onLock: () => void }) {
                 await upsertQuestion(q);
                 setEditing(null);
                 await refresh();
-              } catch (e: any) {
-                setError(e?.message ?? String(e));
+              } catch (e: unknown) {
+                setError(e instanceof Error ? e.message : String(e));
               }
             }}
             onCancel={() => setEditing(null)}
@@ -209,8 +222,8 @@ function AdminConsole({ onLock }: { onLock: () => void }) {
                   try {
                     await deleteQuestion(q.id);
                     await refresh();
-                  } catch (e: any) {
-                    setError(e?.message ?? String(e));
+                  } catch (e: unknown) {
+                    setError(e instanceof Error ? e.message : String(e));
                   }
                 }
               }}
@@ -223,23 +236,23 @@ function AdminConsole({ onLock }: { onLock: () => void }) {
                 try {
                   await reorderQuestions(next);
                   await refresh();
-                } catch (e: any) {
-                  setError(e?.message ?? String(e));
+                } catch (e: unknown) {
+                  setError(e instanceof Error ? e.message : String(e));
                 }
               }}
               onDuplicate={async () => {
                 if (!confirm(`¿Duplicar "${q.text_prompt}"?`)) return;
                 try {
                   const newQuestion = await duplicateQuestion(q.id);
-                  const originalIndex = questions.findIndex(x => x.id === q.id);
+                  const originalIndex = questions.findIndex((x) => x.id === q.id);
                   const reordered = [...questions];
                   if (originalIndex !== -1) {
                     reordered.splice(originalIndex + 1, 0, newQuestion);
                   }
                   await reorderQuestions(reordered);
                   await refresh();
-                } catch (e: any) {
-                  setError(e?.message ?? String(e));
+                } catch (e: unknown) {
+                  setError(e instanceof Error ? e.message : String(e));
                 }
               }}
               onDragStart={() => setDraggedIndex(i)}
@@ -256,8 +269,8 @@ function AdminConsole({ onLock }: { onLock: () => void }) {
                 try {
                   await reorderQuestions(next);
                   await refresh();
-                } catch (e: any) {
-                  setError(e?.message ?? String(e));
+                } catch (e: unknown) {
+                  setError(e instanceof Error ? e.message : String(e));
                 }
                 setDraggedIndex(null);
               }}
@@ -344,16 +357,17 @@ function QuestionEditor({
   onCancel: () => void;
 }) {
   const [q, setQ] = useState<Question>(question);
-  const [choicesText, setChoicesText] = useState((question.choices ?? []).join("
-"));
+  const [choicesText, setChoicesText] = useState((question.choices ?? []).join("\n"));
 
   const save = () => {
     const cleaned: Question = {
       ...q,
       choices:
         q.type === "multiple_choice"
-          ? choicesText.split("
-").map((s) => s.trim()).filter(Boolean)
+          ? choicesText
+              .split("\n")
+              .map((s) => s.trim())
+              .filter(Boolean)
           : [],
     };
     onSave(cleaned);
@@ -375,8 +389,11 @@ function QuestionEditor({
               type="checkbox"
               id="is_optional"
               checked={q.is_optional}
-              onChange={(e) => setQ({ ...q, is_optional: e.target.checked })} />
-            <label htmlFor="is_optional" className="text-sm text-muted-foreground select-none">Pregunta opcional (permite saltar)</label>
+              onChange={(e) => setQ({ ...q, is_optional: e.target.checked })}
+            />
+            <label htmlFor="is_optional" className="text-sm text-muted-foreground select-none">
+              Pregunta opcional (permite saltar)
+            </label>
           </div>
         </div>
         <div>
@@ -403,9 +420,7 @@ function QuestionEditor({
             rows={4}
             value={choicesText}
             onChange={(e) => setChoicesText(e.target.value)}
-            placeholder={"Opción A
-Opción B
-Opción C"}
+            placeholder={"Opción A\nOpción B\nOpción C"}
           />
         </div>
       )}
@@ -417,32 +432,39 @@ Opción C"}
       <QuestionImageManager question={q} onUpdate={setQ} />
 
       <div className="flex justify-end gap-3 mt-6">
-        <button className="btn-neon-red px-5 py-2" onClick={onCancel}>Cancelar</button>
-        <button className="btn-neon-purple px-6 py-2" onClick={save}>Guardar Pregunta</button>
+        <button className="btn-neon-red px-5 py-2" onClick={onCancel}>
+          Cancelar
+        </button>
+        <button className="btn-neon-purple px-6 py-2" onClick={save}>
+          Guardar Pregunta
+        </button>
       </div>
     </div>
   );
 }
 
-function SliderEditor({ q, setQ }: { q: Question, setQ: (q: Question) => void }) {
+function SliderEditor({ q, setQ }: { q: Question; setQ: (q: Question) => void }) {
   const labels = q.slider_labels ?? [];
 
   const addLabel = () => {
-    const newLabel = { value: Math.round(((q.slider_min ?? 0) + (q.slider_max ?? 10)) / 2), label: "" };
+    const newLabel = {
+      value: Math.round(((q.slider_min ?? 0) + (q.slider_max ?? 10)) / 2),
+      label: "",
+    };
     setQ({ ...q, slider_labels: [...labels, newLabel] });
-  }
+  };
 
   const updateLabel = (index: number, newLabel: { value: number; label: string }) => {
     const nextLabels = [...labels];
     nextLabels[index] = newLabel;
     setQ({ ...q, slider_labels: nextLabels });
-  }
+  };
 
   const removeLabel = (index: number) => {
     const nextLabels = [...labels];
     nextLabels.splice(index, 1);
     setQ({ ...q, slider_labels: nextLabels });
-  }
+  };
 
   return (
     <div className="space-y-4">
@@ -453,7 +475,8 @@ function SliderEditor({ q, setQ }: { q: Question, setQ: (q: Question) => void })
             type="number"
             className="input-cyber w-full"
             value={q.slider_min ?? 0}
-            onChange={(e) => setQ({ ...q, slider_min: e.target.valueAsNumber })} />
+            onChange={(e) => setQ({ ...q, slider_min: e.target.valueAsNumber })}
+          />
         </div>
         <div>
           <Label>Máximo</Label>
@@ -461,21 +484,24 @@ function SliderEditor({ q, setQ }: { q: Question, setQ: (q: Question) => void })
             type="number"
             className="input-cyber w-full"
             value={q.slider_max ?? 10}
-            onChange={(e) => setQ({ ...q, slider_max: e.target.valueAsNumber })} />
+            onChange={(e) => setQ({ ...q, slider_max: e.target.valueAsNumber })}
+          />
         </div>
         <div>
           <Label>Etiqueta Izquierda</Label>
           <input
             className="input-cyber w-full"
             value={q.slider_left_label ?? ""}
-            onChange={(e) => setQ({ ...q, slider_left_label: e.target.value })} />
+            onChange={(e) => setQ({ ...q, slider_left_label: e.target.value })}
+          />
         </div>
         <div>
           <Label>Etiqueta Derecha</Label>
           <input
             className="input-cyber w-full"
             value={q.slider_right_label ?? ""}
-            onChange={(e) => setQ({ ...q, slider_right_label: e.target.value })} />
+            onChange={(e) => setQ({ ...q, slider_right_label: e.target.value })}
+          />
         </div>
       </div>
 
@@ -495,16 +521,26 @@ function SliderEditor({ q, setQ }: { q: Question, setQ: (q: Question) => void })
               onChange={(e) => updateLabel(i, { ...label, label: e.target.value })}
               placeholder="Texto de la etiqueta..."
             />
-            <button className="btn-neon-red px-3 py-1 text-xs" onClick={() => removeLabel(i)}>✕</button>
+            <button className="btn-neon-red px-3 py-1 text-xs" onClick={() => removeLabel(i)}>
+              ✕
+            </button>
           </div>
         ))}
-        <button className="btn-neon-blue px-3 py-1 text-xs" onClick={addLabel}>+ Añadir etiqueta</button>
+        <button className="btn-neon-blue px-3 py-1 text-xs" onClick={addLabel}>
+          + Añadir etiqueta
+        </button>
       </div>
     </div>
   );
 }
 
-function QuestionImageManager({ question, onUpdate }: { question: Question, onUpdate: (q: Question) => void }) {
+function QuestionImageManager({
+  question,
+  onUpdate,
+}: {
+  question: Question;
+  onUpdate: (q: Question) => void;
+}) {
   const [pending, setPending] = useState<PendingUpload[]>([]);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -540,8 +576,8 @@ function QuestionImageManager({ question, onUpdate }: { question: Question, onUp
       onUpdate({ ...question, image_urls: newImageUrls, image_paths: newImagePaths });
       pending.forEach((p) => URL.revokeObjectURL(p.preview));
       setPending([]);
-    } catch (e: any) {
-      setError(e?.message ?? String(e));
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e));
     } finally {
       setUploading(false);
     }
@@ -560,23 +596,38 @@ function QuestionImageManager({ question, onUpdate }: { question: Question, onUp
       nextUrls.splice(index, 1);
       nextPaths.splice(index, 1);
       onUpdate({ ...question, image_urls: nextUrls, image_paths: nextPaths });
-    } catch (e: any) {
-      setError(e?.message ?? String(e));
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e));
     }
-  }
+  };
 
   return (
     <div className="mt-6">
       <Label>Adjuntar Imágenes a la Pregunta</Label>
       <div
-        onDragOver={(e) => { e.preventDefault(); }}
-        onDrop={(e) => { e.preventDefault(); handleFiles(e.dataTransfer.files); }}
+        onDragOver={(e) => {
+          e.preventDefault();
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          handleFiles(e.dataTransfer.files);
+        }}
         onClick={() => inputRef.current?.click()}
         className="border-2 border-dashed p-6 text-center cursor-pointer transition-all border-border hover:border-primary/60"
       >
         <div className="neon-text-purple text-2xl mb-2">⬆</div>
         <div className="tracking-widest text-xs">SUELTA IMÁGENES O HAZ CLIC PARA SUBIR</div>
-        <input ref={inputRef} type="file" multiple accept="image/*" className="hidden" onChange={(e) => { handleFiles(e.target.files); e.target.value = ""; }} />
+        <input
+          ref={inputRef}
+          type="file"
+          multiple
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            handleFiles(e.target.files);
+            e.target.value = "";
+          }}
+        />
       </div>
 
       {error && <div className="neon-text-red text-xs mt-2 tracking-widest">✕ {error}</div>}
@@ -604,7 +655,9 @@ function QuestionImageManager({ question, onUpdate }: { question: Question, onUp
             ))}
           </div>
           <button onClick={commit} disabled={uploading} className="btn-neon-purple px-5 py-2 mt-4">
-            {uploading ? "Subiendo..." : `Adjuntar ${pending.length} Imagen${pending.length === 1 ? "" : "s"}`}
+            {uploading
+              ? "Subiendo..."
+              : `Adjuntar ${pending.length} Imagen${pending.length === 1 ? "" : "s"}`}
           </button>
         </div>
       )}
@@ -628,7 +681,7 @@ function QuestionImageManager({ question, onUpdate }: { question: Question, onUp
         </div>
       )}
     </div>
-  )
+  );
 }
 
 function Label({ children }: { children: React.ReactNode }) {
@@ -642,7 +695,7 @@ function Label({ children }: { children: React.ReactNode }) {
 interface PendingUpload {
   id: string;
   file: File;
-  title:.tsx string;
+  title: string;
   preview: string;
 }
 
@@ -657,8 +710,8 @@ function LevelManager({ questionId }: { questionId: string }) {
   const refresh = useCallback(async () => {
     try {
       setOpts(await getOptionsForQuestion(questionId));
-    } catch (e: any) {
-      setError(e?.message ?? String(e));
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e));
     }
   }, [questionId]);
 
@@ -685,7 +738,7 @@ function LevelManager({ questionId }: { questionId: string }) {
     setUploading(true);
     setError(null);
     try {
-      const uploaded: LevelOption[] = [];
+      const uploaded: Omit<LevelOption, "created_at">[] = [];
       for (const p of pending) {
         const { image_url, image_path } = await uploadQuestionImage(p.file);
         uploaded.push({
@@ -700,8 +753,8 @@ function LevelManager({ questionId }: { questionId: string }) {
       pending.forEach((p) => URL.revokeObjectURL(p.preview));
       setPending([]);
       await refresh();
-    } catch (e: any) {
-      setError(e?.message ?? String(e));
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e));
     } finally {
       setUploading(false);
     }
@@ -723,10 +776,9 @@ function LevelManager({ questionId }: { questionId: string }) {
           handleFiles(e.dataTransfer.files);
         }}
         onClick={() => inputRef.current?.click()}
-        className={`border-2 border-dashed p-8 text-center cursor-pointer transition-all ${dragging
-          ? "neon-border-purple bg-primary/5"
-          : "border-border hover:border-primary/60"
-          }`}
+        className={`border-2 border-dashed p-8 text-center cursor-pointer transition-all ${
+          dragging ? "neon-border-purple bg-primary/5" : "border-border hover:border-primary/60"
+        }`}
       >
         <div className="neon-text-purple text-3xl mb-2">⬆</div>
         <div className="tracking-widest text-sm">SUELTA IMÁGENES O HAZ CLIC PARA SUBIR</div>
@@ -779,11 +831,7 @@ function LevelManager({ questionId }: { questionId: string }) {
               </div>
             ))}
           </div>
-          <button
-            onClick={commit}
-            disabled={uploading}
-            className="btn-neon-purple px-5 py-2 mt-4"
-          >
+          <button onClick={commit} disabled={uploading} className="btn-neon-purple px-5 py-2 mt-4">
             {uploading
               ? "Subiendo..."
               : `Guardar ${pending.length} Nivel${pending.length === 1 ? "" : "es"}`}
@@ -793,7 +841,7 @@ function LevelManager({ questionId }: { questionId: string }) {
 
       {opts.length > 0 && (
         <div className="mt-6">
-          <div className="text-[10px] tracking-widest text-muted-foreground mb-3" >
+          <div className="text-[10px] tracking-widest text-muted-foreground mb-3">
             NIVELES ACTUALES · {opts.length}
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
