@@ -1,6 +1,6 @@
 import { supabase, LEVELS_BUCKET } from "./supabase";
 
-export type QuestionType = "text" | "multiple_choice" | "level_gallery";
+export type QuestionType = "text" | "numeric" | "multiple_choice" | "level_gallery" | "slider";
 
 export interface LevelOption {
   id: string;
@@ -19,6 +19,11 @@ export interface Question {
   is_optional?: boolean;
   image_urls?: string[];
   image_paths?: string[];
+  // for slider
+  slider_min?: number;
+  slider_max?: number;
+  slider_left_label?: string;
+  slider_right_label?: string;
 }
 
 export interface Response {
@@ -37,7 +42,7 @@ export const uid = () =>
 export async function getQuestions(): Promise<Question[]> {
   const { data, error } = await supabase
     .from("questions")
-    .select("id, type, text_prompt, order, choices, is_optional, image_urls, image_paths")
+    .select("id, type, text_prompt, order, choices, is_optional, image_urls, image_paths, slider_min, slider_max, slider_left_label, slider_right_label")
     .order("order", { ascending: true });
   if (error) throw error;
   return (data ?? []) as Question[];
@@ -53,6 +58,10 @@ export async function upsertQuestion(q: Question): Promise<void> {
     is_optional: q.is_optional,
     image_urls: q.image_urls,
     image_paths: q.image_paths,
+    slider_min: q.slider_min,
+    slider_max: q.slider_max,
+    slider_left_label: q.slider_left_label,
+    slider_right_label: q.slider_right_label,
   };
   const { error } = await supabase.from("questions").upsert(payload);
   if (error) throw error;

@@ -132,6 +132,10 @@ function AdminConsole({ onLock }: { onLock: () => void }) {
       text_prompt: "",
       is_optional: false,
       order: questions.length + 1,
+      slider_min: 0,
+      slider_max: 10,
+      slider_left_label: "",
+      slider_right_label: "",
       choices: [],
     });
   };
@@ -313,6 +317,8 @@ function QuestionEditor({
             onChange={(e) => setQ({ ...q, type: e.target.value as QuestionType })}
           >
             <option value="text">Entrada de Texto</option>
+            <option value="numeric">Entrada Numérica</option>
+            <option value="slider">Slider</option>
             <option value="multiple_choice">Opción Múltiple</option>
             <option value="level_gallery">Galería de Niveles</option>
           </select>
@@ -334,11 +340,50 @@ function QuestionEditor({
 
       {q.type === "level_gallery" && <LevelManager questionId={q.id} />}
 
+      {q.type === "slider" && <SliderEditor q={q} setQ={setQ} />}
+
       <QuestionImageManager question={q} onUpdate={setQ} />
 
       <div className="flex justify-end gap-3 mt-6">
         <button className="btn-neon-red px-5 py-2" onClick={onCancel}>Cancelar</button>
         <button className="btn-neon-purple px-6 py-2" onClick={save}>Guardar Pregunta</button>
+      </div>
+    </div>
+  );
+}
+
+function SliderEditor({ q, setQ }: { q: Question, setQ: (q: Question) => void }) {
+  return (
+    <div className="grid md:grid-cols-4 gap-4 mb-4">
+      <div>
+        <Label>Mínimo</Label>
+        <input
+          type="number"
+          className="input-cyber w-full"
+          value={q.slider_min ?? 0}
+          onChange={(e) => setQ({ ...q, slider_min: e.target.valueAsNumber })} />
+      </div>
+      <div>
+        <Label>Máximo</Label>
+        <input
+          type="number"
+          className="input-cyber w-full"
+          value={q.slider_max ?? 10}
+          onChange={(e) => setQ({ ...q, slider_max: e.target.valueAsNumber })} />
+      </div>
+      <div>
+        <Label>Etiqueta Izquierda</Label>
+        <input
+          className="input-cyber w-full"
+          value={q.slider_left_label ?? ""}
+          onChange={(e) => setQ({ ...q, slider_left_label: e.target.value })} />
+      </div>
+      <div>
+        <Label>Etiqueta Derecha</Label>
+        <input
+          className="input-cyber w-full"
+          value={q.slider_right_label ?? ""}
+          onChange={(e) => setQ({ ...q, slider_right_label: e.target.value })} />
       </div>
     </div>
   );

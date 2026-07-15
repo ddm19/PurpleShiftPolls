@@ -219,10 +219,14 @@ function QuestionView({
 }) {
   if (question.type === "text")
     return <TextQuestion q={question} onAnswer={onAnswer} disabled={disabled} />;
+  if (question.type === "numeric")
+    return <NumericQuestion q={question} onAnswer={onAnswer} disabled={disabled} />;
   if (question.type === "multiple_choice")
     return (
       <ChoiceQuestion q={question} onAnswer={onAnswer} disabled={disabled} />
     );
+  if (question.type === "slider")
+    return <SliderQuestion q={question} onAnswer={onAnswer} disabled={disabled} />;
   return (
     <GalleryQuestion q={question} onAnswer={onAnswer} disabled={disabled} />
   );
@@ -296,6 +300,50 @@ function TextQuestion({
   );
 }
 
+function NumericQuestion({
+  q,
+  onAnswer,
+  disabled,
+}: {
+  q: Question;
+  onAnswer: (v: string) => void;
+  disabled?: boolean;
+}) {
+  const [val, setVal] = useState("");
+  return (
+    <div className="panel-cyber p-6 sm:p-8">
+      <Prompt>{q.text_prompt}</Prompt>
+      <QuestionImages urls={q.image_urls} />
+      <input
+        autoFocus
+        type="number"
+        inputMode="numeric"
+        className="input-cyber w-full text-base sm:text-lg"
+        placeholder="introduce un número..."
+        value={val}
+        onChange={(e) => setVal(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && val.trim() && !disabled)
+            onAnswer(val.trim());
+        }}
+      />
+      <div className="mt-6 flex justify-end gap-4">
+        {q.is_optional && (
+          <button
+            className="btn-neon-blue px-6 py-3"
+            disabled={disabled}
+            onClick={() => onAnswer("")}
+          >Saltar →</button>)}
+        <button
+          className="btn-neon-purple px-8 py-3"
+          disabled={!val.trim() || disabled}
+          onClick={() => onAnswer(val.trim())}
+        >Transmitir →</button>
+      </div>
+    </div>
+  );
+}
+
 function ChoiceQuestion({
   q,
   onAnswer,
@@ -344,6 +392,67 @@ function ChoiceQuestion({
         >
           Confirmar →
         </button>
+      </div>
+    </div>
+  );
+}
+
+function SliderQuestion({
+  q,
+  onAnswer,
+  disabled,
+}: {
+  q: Question;
+  onAnswer: (v: string) => void;
+  disabled?: boolean;
+}) {
+  const min = q.slider_min ?? 0;
+  const max = q.slider_max ?? 10;
+  const [val, setVal] = useState<number>(Math.round((min + max) / 2));
+
+  return (
+    <div className="panel-cyber p-6 sm:p-8">
+      <Prompt>{q.text_prompt}</Prompt>
+      <QuestionImages urls={q.image_urls} />
+
+      <div className="flex items-center gap-4 my-8">
+        {q.slider_left_label && (
+          <span className="text-sm text-muted-foreground text-right flex-1">
+            {q.slider_left_label}
+          </span>
+        )}
+        <div className="w-full max-w-lg relative">
+          <input
+            type="range"
+            min={min}
+            max={max}
+            value={val}
+            onChange={(e) => setVal(e.target.valueAsNumber)}
+            className="w-full slider-cyber"
+          />
+          <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-lg neon-text-purple font-bold">
+            {val}
+          </div>
+        </div>
+        {q.slider_right_label && (
+          <span className="text-sm text-muted-foreground flex-1">
+            {q.slider_right_label}
+          </span>
+        )}
+      </div>
+
+      <div className="mt-12 flex justify-end gap-4">
+        {q.is_optional && (
+          <button
+            className="btn-neon-blue px-6 py-3"
+            disabled={disabled}
+            onClick={() => onAnswer("")}
+          >Saltar →</button>)}
+        <button
+          className="btn-neon-purple px-8 py-3"
+          disabled={disabled}
+          onClick={() => onAnswer(String(val))}
+        >Confirmar →</button>
       </div>
     </div>
   );
