@@ -157,13 +157,14 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative z-10 min-h-screen flex flex-col">
       <header className="flex items-center justify-between border-b border-border/40 px-4 py-3 sm:px-6">
-        <Link to="/" className="flex items-center gap-4" />
-        <img src="/purplelogo.png" alt="Purple Shift Logo" className="h-10 w-auto" />
-        <div className="hidden sm:block">
-          <div className="text-[10px] text-muted-foreground tracking-widest">
-            Encuesta de Playtest de la versión v26.07.14
+        <Link to="/" className="flex items-center gap-4">
+          <img src="/purplelogo.png" alt="Purple Shift Logo" className="h-10 w-auto" />
+          <div className="hidden sm:block">
+            <div className="text-[10px] text-muted-foreground tracking-widest">
+              Encuesta de Playtest de la versión v26.07.14
+            </div>
           </div>
-        </div>
+        </Link>
         <a
           href="/admin"
           className="text-xs uppercase tracking-widest text-muted-foreground hover:neon-text-blue"
