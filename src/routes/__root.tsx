@@ -104,6 +104,7 @@ function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <head>
+        <link rel="icon" type="image/png" href="/purplelogo.png" />
         <HeadContent />
       </head>
       <body>
