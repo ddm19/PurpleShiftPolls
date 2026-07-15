@@ -230,16 +230,41 @@ function QuestionView({
 }
 
 function QuestionImages({ urls }: { urls?: string[] }) {
+  const [zoomedUrl, setZoomedUrl] = useState<string | null>(null);
+
   if (!urls || urls.length === 0) return null;
+
   return (
-    <div className="mb-4 grid grid-cols-2 gap-3 sm:mb-6 md:grid-cols-4">
-      {urls.map(url => (
-        <a key={url} href={url} target="_blank" rel="noopener noreferrer">
-          <img src={url} alt="Imagen de la pregunta" className="h-auto w-full max-h-48 rounded-sm object-contain" />
-        </a>
-      ))}
-    </div>
-  )
+    <>
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:mb-6 md:grid-cols-4">
+        {urls.map(url => (
+          <button key={url} onClick={() => setZoomedUrl(url)} className="focus:outline-none focus:ring-2 focus:ring-purple-500">
+            <img src={url} alt="Imagen de la pregunta" className="h-auto w-full max-h-48 rounded-sm object-contain" />
+          </button>
+        ))}
+      </div>
+
+      {zoomedUrl && (
+        <div
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+          onClick={() => setZoomedUrl(null)}
+        >
+          <button
+            className="absolute top-4 right-4 text-white text-4xl z-50"
+            aria-label="Cerrar imagen"
+          >
+            &times;
+          </button>
+          <img
+            src={zoomedUrl}
+            alt="Imagen ampliada"
+            className="max-w-[95vw] max-h-[95vh] object-contain"
+            onClick={(e) => e.stopPropagation()} // Evita que el clic en la imagen cierre el modal
+          />
+        </div>
+      )}
+    </>
+  );
 }
 
 function Prompt({ children }: { children: React.ReactNode }) {
@@ -412,40 +437,44 @@ function SliderQuestion({
       <Prompt>{q.text_prompt}</Prompt>
       <QuestionImages urls={q.image_urls} />
 
-      <div className="flex items-center gap-4 my-8">
+      <div className="flex items-start gap-4 my-8">
         {q.slider_left_label && (
-          <span className="text-sm text-muted-foreground text-right flex-1">
+          <span className="text-sm text-muted-foreground text-right w-24 shrink-0 pt-1">
             {q.slider_left_label}
           </span>
         )}
-        <div className="w-full max-w-lg relative">
-          <input
-            type="range"
-            min={min}
-            max={max}
-            value={val}
-            onChange={(e) => setVal(e.target.valueAsNumber)}
-            className="w-full slider-cyber"
-          />
-          <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-lg neon-text-purple font-bold">
-            {val}
+        <div className="flex-1 min-w-0 pt-8">
+          <div className="w-full max-w-lg mx-auto">
+            <div className="relative">
+              <input
+                type="range"
+                min={min}
+                max={max}
+                value={val}
+                onChange={(e) => setVal(e.target.valueAsNumber)}
+                className="w-full slider-cyber"
+              />
+              <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-lg neon-text-purple font-bold">
+                {val}
+              </div>
+            </div>
+            {(q.slider_labels && q.slider_labels.length > 0) && (
+              <div className="relative h-6 mt-2">
+                {q.slider_labels.map(label => {
+                  const percent = ((label.value - min) / (max - min)) * 100;
+                  return (
+                    <div key={label.value} className="absolute text-center text-[10px] text-muted-foreground" style={{ left: `${percent}%`, transform: 'translateX(-50%)' }}>
+                      <div className="h-1.5 w-px bg-border/70 mx-auto"></div>
+                      {label.label}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         </div>
-        {(q.slider_labels && q.slider_labels.length > 0) && (
-          <div className="w-full max-w-lg relative h-6 mt-1">
-            {q.slider_labels.map(label => {
-              const percent = ((label.value - min) / (max - min)) * 100;
-              return (
-                <div key={label.value} className="absolute text-center text-[10px] text-muted-foreground" style={{ left: `${percent}%`, transform: 'translateX(-50%)' }}>
-                  <div className="h-1.5 w-px bg-border"></div>
-                  {label.label}
-                </div>
-              )
-            })}
-          </div>
-        )}
         {q.slider_right_label && (
-          <span className="text-sm text-muted-foreground flex-1">
+          <span className="text-sm text-muted-foreground w-24 shrink-0 pt-1">
             {q.slider_right_label}
           </span>
         )}
