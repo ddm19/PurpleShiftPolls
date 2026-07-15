@@ -112,6 +112,8 @@ function AdminConsole({ onLock }: { onLock: () => void }) {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [editing, setEditing] = useState<Question | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dropIndex, setDropIndex] = useState<number | null>(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -190,10 +192,12 @@ function AdminConsole({ onLock }: { onLock: () => void }) {
               // no hay preguntas definidas. haz clic en "nueva pregunta" para empezar.
             </div>
           )}
-          {questions.map((q) => (
+          {questions.map((q, i) => (
             <QuestionRow
               key={q.id}
               q={q}
+              isDragged={draggedIndex === i}
+              isDropTarget={dropIndex === i}
               onEdit={() => setEditing(q)}
               onDelete={async () => {
                 if (confirm(`¿Borrar "${q.text_prompt}"?`)) {
@@ -218,6 +222,25 @@ function AdminConsole({ onLock }: { onLock: () => void }) {
                   setError(e?.message ?? String(e));
                 }
               }}
+              onDragStart={() => setDraggedIndex(i)}
+              onDragEnd={() => {
+                setDraggedIndex(null);
+                setDropIndex(null);
+              }}
+              onDragEnter={() => setDropIndex(i)}
+              onDrop={async () => {
+                if (draggedIndex === null || draggedIndex === i) return;
+                const next = [...questions];
+                const [draggedItem] = next.splice(draggedIndex, 1);
+                next.splice(i, 0, draggedItem);
+                try {
+                  await reorderQuestions(next);
+                  await refresh();
+                } catch (e: any) {
+                  setError(e?.message ?? String(e));
+                }
+                setDraggedIndex(null);
+              }}
             />
           ))}
         </div>
@@ -231,19 +254,39 @@ function QuestionRow({
   onEdit,
   onDelete,
   onMove,
+  onDragStart,
+  onDragEnd,
+  onDragEnter,
+  onDrop,
+  isDragged,
+  isDropTarget,
 }: {
   q: Question;
   onEdit: () => void;
   onDelete: () => void;
   onMove: (dir: -1 | 1) => void;
+  onDragStart: () => void;
+  onDragEnd: () => void;
+  onDragEnter: () => void;
+  onDrop: () => void;
+  isDragged: boolean;
+  isDropTarget: boolean;
 }) {
   return (
-    <div className="panel-cyber p-5 flex items-center gap-4">
-      <div className="text-xs text-muted-foreground w-10">
+    <div
+      draggable
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onDragEnter={onDragEnter}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={onDrop}
+      className={`panel-cyber p-5 flex items-center gap-4 transition-all cursor-grab ${isDragged ? "opacity-30" : ""} ${isDropTarget ? "neon-border-blue" : ""}`}
+    >
+      <div className="text-xs text-muted-foreground w-10 select-none">
         #{String(q.order).padStart(2, "0")}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="text-[10px] tracking-widest neon-text-blue mb-1">
+        <div className="text-[10px] tracking-widest neon-text-blue mb-1 select-none">
           {q.type.toUpperCase().replace("_", " ")}
         </div>
         <div className="font-bold truncate">{q.text_prompt || "(sin título)"}</div>

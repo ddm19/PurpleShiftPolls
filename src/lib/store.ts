@@ -116,12 +116,8 @@ export async function uploadQuestionImage(
   file: File,
   bucketName: string = LEVELS_BUCKET
 ): Promise<{ image_url: string; image_path: string }> {
-  const { data: userData, error: userErr } = await supabase.auth.getUser();
-  if (userErr || !userData?.user) throw userErr ?? new Error("Not authenticated");
-
   const ext = file.name.split(".").pop()?.toLowerCase() || "png";
-
-  const path = `${userData.user.id}/${Date.now()}.${ext}`;
+  const path = `${uid()}.${ext}`;
 
   const { error } = await supabase.storage
     .from(bucketName)
