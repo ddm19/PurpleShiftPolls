@@ -228,6 +228,19 @@ function QuestionView({
   );
 }
 
+function QuestionImages({ urls }: { urls?: string[] }) {
+  if (!urls || urls.length === 0) return null;
+  return (
+    <div className="mb-4 grid grid-cols-2 gap-3 sm:mb-6 md:grid-cols-4">
+      {urls.map(url => (
+        <a key={url} href={url} target="_blank" rel="noopener noreferrer">
+          <img src={url} alt="Imagen de la pregunta" className="h-auto w-full max-h-48 rounded-sm object-contain" />
+        </a>
+      ))}
+    </div>
+  )
+}
+
 function Prompt({ children }: { children: React.ReactNode }) {
   return (
     <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-6 sm:mb-8 leading-snug">
@@ -250,6 +263,7 @@ function TextQuestion({
   return (
     <div className="panel-cyber p-6 sm:p-8">
       <Prompt>{q.text_prompt}</Prompt>
+      <QuestionImages urls={q.image_urls} />
       <input
         autoFocus
         className="input-cyber w-full text-base sm:text-lg"
@@ -261,7 +275,15 @@ function TextQuestion({
             onAnswer(val.trim());
         }}
       />
-      <div className="mt-6 flex justify-end">
+      <div className="mt-6 flex justify-end gap-4">
+        {q.is_optional && (
+          <button
+            className="btn-neon-blue px-6 py-3"
+            disabled={disabled}
+            onClick={() => onAnswer("")}
+          >
+            Saltar →
+          </button>)}
         <button
           className="btn-neon-purple px-8 py-3"
           disabled={!val.trim() || disabled}
@@ -287,6 +309,7 @@ function ChoiceQuestion({
   return (
     <div className="panel-cyber p-6 sm:p-8">
       <Prompt>{q.text_prompt}</Prompt>
+      <QuestionImages urls={q.image_urls} />
       <div className="space-y-3">
         {(q.choices ?? []).map((c) => {
           const isSel = selected === c;
@@ -305,7 +328,15 @@ function ChoiceQuestion({
           );
         })}
       </div>
-      <div className="mt-6 flex justify-end">
+      <div className="mt-6 flex justify-end gap-4">
+        {q.is_optional && (
+          <button
+            className="btn-neon-blue px-6 py-3"
+            disabled={disabled}
+            onClick={() => onAnswer("")}
+          >
+            Saltar →
+          </button>)}
         <button
           className="btn-neon-purple px-8 py-3"
           disabled={!selected || disabled}
@@ -420,12 +451,13 @@ function GalleryQuestion({
         <p className="text-muted-foreground mb-6">
           // aún no se han subido datos de niveles. visita /admin para cargarlos.
         </p>
-        <button
-          className="btn-neon-blue px-6 py-2"
-          onClick={() => onAnswer("__skipped__")}
-        >
-          Saltar →
-        </button>
+        {q.is_optional && (
+          <button
+            className="btn-neon-blue px-6 py-2"
+            onClick={() => onAnswer("")}
+          >
+            Saltar →
+          </button>)}
       </div>
     );
   }
@@ -433,6 +465,7 @@ function GalleryQuestion({
   return (
     <div>
       <Prompt>{q.text_prompt}</Prompt>
+      <QuestionImages urls={q.image_urls} />
       <div className="relative">
         <div
           ref={scrollerRef}
@@ -472,13 +505,23 @@ function GalleryQuestion({
         <div className="h-8 mb-3 text-lg neon-text-purple font-bold tracking-widest transition-opacity duration-300">
           {focused?.title}
         </div>
-        <button
-          className="btn-neon-purple px-10 py-4 text-base"
-          disabled={disabled || !focused}
-          onClick={() => focused && onAnswer(focused.id)}
-        >
-          ▶ Votar por este Nivel
-        </button>
+        <div className="flex justify-center gap-4">
+          {q.is_optional && (
+            <button
+              className="btn-neon-blue px-6 py-3"
+              disabled={disabled}
+              onClick={() => onAnswer("")}
+            >
+              Saltar →
+            </button>)}
+          <button
+            className="btn-neon-purple px-10 py-4 text-base"
+            disabled={disabled || !focused}
+            onClick={() => focused && onAnswer(focused.id)}
+          >
+            ▶ Votar por este Nivel
+          </button>
+        </div>
       </div>
     </div>
   );

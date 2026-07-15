@@ -2,18 +2,16 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   addOptions,
-  deleteOption,
   deleteQuestion,
   getOptionsForQuestion,
   getQuestions,
   reorderQuestions,
   uid,
   updateOption,
-  uploadLevelImage,
-  upsertQuestion,
   type LevelOption,
-  type Question,
+  type Question, uploadQuestionImage,
   type QuestionType,
+  upsertQuestion, deleteOption,
 } from "@/lib/store";
 
 export const Route = createFileRoute("/admin")({
@@ -132,6 +130,7 @@ function AdminConsole({ onLock }: { onLock: () => void }) {
       id: uid(),
       type: "text",
       text_prompt: "",
+      is_optional: false,
       order: questions.length + 1,
       choices: [],
     });
@@ -281,7 +280,7 @@ function QuestionEditor({
       choices:
         q.type === "multiple_choice"
           ? choicesText.split("\n").map((s) => s.trim()).filter(Boolean)
-          : undefined,
+          : [],
     };
     onSave(cleaned);
   };
@@ -297,6 +296,14 @@ function QuestionEditor({
             onChange={(e) => setQ({ ...q, text_prompt: e.target.value })}
             placeholder="Introduce el texto de la pregunta..."
           />
+          <div className="mt-2 flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="is_optional"
+              checked={q.is_optional}
+              onChange={(e) => setQ({ ...q, is_optional: e.target.checked })} />
+            <label htmlFor="is_optional" className="text-sm text-muted-foreground select-none">Pregunta opcional (permite saltar)</label>
+          </div>
         </div>
         <div>
           <Label>Tipo</Label>
@@ -327,12 +334,141 @@ function QuestionEditor({
 
       {q.type === "level_gallery" && <LevelManager questionId={q.id} />}
 
+      <QuestionImageManager question={q} onUpdate={setQ} />
+
       <div className="flex justify-end gap-3 mt-6">
         <button className="btn-neon-red px-5 py-2" onClick={onCancel}>Cancelar</button>
         <button className="btn-neon-purple px-6 py-2" onClick={save}>Guardar Pregunta</button>
       </div>
     </div>
   );
+}
+
+function QuestionImageManager({ question, onUpdate }: { question: Question, onUpdate: (q: Question) => void }) {
+  const [pending, setPending] = useState<PendingUpload[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleFiles = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const arr: PendingUpload[] = [];
+    for (const f of Array.from(files)) {
+      if (!f.type.startsWith("image/")) continue;
+      arr.push({
+        id: uid(),
+        file: f,
+        title: f.name.replace(/\.[^.]+$/, ""),
+        preview: URL.createObjectURL(f),
+      });
+    }
+    setPending((p) => [...p, ...arr]);
+  };
+
+  const commit = async () => {
+    setUploading(true);
+    setError(null);
+    try {
+      const newImageUrls = [...(question.image_urls ?? [])];
+      const newImagePaths = [...(question.image_paths ?? [])];
+
+      for (const p of pending) {
+        const { image_url, image_path } = await uploadQuestionImage(p.file, "question_images");
+        newImageUrls.push(image_url);
+        newImagePaths.push(image_path);
+      }
+      onUpdate({ ...question, image_urls: newImageUrls, image_paths: newImagePaths });
+      pending.forEach((p) => URL.revokeObjectURL(p.preview));
+      setPending([]);
+    } catch (e: any) {
+      setError(e?.message ?? String(e));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const deleteImage = async (index: number) => {
+    const imageUrl = question.image_urls?.[index];
+    const imagePath = question.image_paths?.[index];
+    if (!imageUrl || !imagePath) return;
+
+    if (!confirm(`¿Borrar esta imagen?`)) return;
+
+    try {
+      const nextUrls = [...(question.image_urls ?? [])];
+      const nextPaths = [...(question.image_paths ?? [])];
+      nextUrls.splice(index, 1);
+      nextPaths.splice(index, 1);
+      onUpdate({ ...question, image_urls: nextUrls, image_paths: nextPaths });
+    } catch (e: any) {
+      setError(e?.message ?? String(e));
+    }
+  }
+
+  return (
+    <div className="mt-6">
+      <Label>Adjuntar Imágenes a la Pregunta</Label>
+      <div
+        onDragOver={(e) => { e.preventDefault(); }}
+        onDrop={(e) => { e.preventDefault(); handleFiles(e.dataTransfer.files); }}
+        onClick={() => inputRef.current?.click()}
+        className="border-2 border-dashed p-6 text-center cursor-pointer transition-all border-border hover:border-primary/60"
+      >
+        <div className="neon-text-purple text-2xl mb-2">⬆</div>
+        <div className="tracking-widest text-xs">SUELTA IMÁGENES O HAZ CLIC PARA SUBIR</div>
+        <input ref={inputRef} type="file" multiple accept="image/*" className="hidden" onChange={(e) => { handleFiles(e.target.files); e.target.value = ""; }} />
+      </div>
+
+      {error && <div className="neon-text-red text-xs mt-2 tracking-widest">✕ {error}</div>}
+
+      {pending.length > 0 && (
+        <div className="mt-4 panel-cyber p-4">
+          <div className="text-[10px] tracking-widest neon-text-blue mb-3">
+            SUBIDA PENDIENTE · {pending.length}
+          </div>
+          <div className="space-y-2">
+            {pending.map((p) => (
+              <div key={p.id} className="flex items-center gap-3">
+                <img src={p.preview} alt="" className="block h-10 w-10 object-cover" />
+                <span className="text-sm text-muted-foreground truncate">{p.file.name}</span>
+                <button
+                  className="btn-neon-red px-3 py-1 text-xs ml-auto"
+                  onClick={() => {
+                    URL.revokeObjectURL(p.preview);
+                    setPending(pending.filter((x) => x.id !== p.id));
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+          <button onClick={commit} disabled={uploading} className="btn-neon-purple px-5 py-2 mt-4">
+            {uploading ? "Subiendo..." : `Adjuntar ${pending.length} Imagen${pending.length === 1 ? "" : "s"}`}
+          </button>
+        </div>
+      )}
+
+      {(question.image_urls?.length ?? 0) > 0 && (
+        <div className="mt-4">
+          <Label>Imágenes Actuales</Label>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {question.image_urls?.map((url, i) => (
+              <div key={url} className="relative group">
+                <img src={url} className="w-full h-24 object-cover" />
+                <button
+                  onClick={() => deleteImage(i)}
+                  className="absolute top-1 right-1 bg-red-800/80 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 function Label({ children }: { children: React.ReactNode }) {
@@ -391,7 +527,7 @@ function LevelManager({ questionId }: { questionId: string }) {
     try {
       const uploaded: LevelOption[] = [];
       for (const p of pending) {
-        const { image_url, image_path } = await uploadLevelImage(questionId, p.file);
+        const { image_url, image_path } = await uploadQuestionImage(p.file);
         uploaded.push({
           id: uid(),
           question_id: questionId,
@@ -428,8 +564,8 @@ function LevelManager({ questionId }: { questionId: string }) {
         }}
         onClick={() => inputRef.current?.click()}
         className={`border-2 border-dashed p-8 text-center cursor-pointer transition-all ${dragging
-            ? "neon-border-purple bg-primary/5"
-            : "border-border hover:border-primary/60"
+          ? "neon-border-purple bg-primary/5"
+          : "border-border hover:border-primary/60"
           }`}
       >
         <div className="neon-text-purple text-3xl mb-2">⬆</div>

@@ -1,8 +1,3 @@
-// Supabase-backed data store for Purple Shift survey.
-// Tables: questions, level_options, responses.
-// Storage bucket: level-images (public).
-// See supabase.md for the SQL schema.
-
 import { supabase, LEVELS_BUCKET } from "./supabase";
 
 export type QuestionType = "text" | "multiple_choice" | "level_gallery";
@@ -12,7 +7,6 @@ export interface LevelOption {
   question_id: string;
   title: string;
   image_url: string;
-  // storage path inside the bucket — used for deletion
   image_path?: string | null;
 }
 
@@ -22,12 +16,15 @@ export interface Question {
   text_prompt: string;
   order: number;
   choices?: string[];
+  is_optional?: boolean;
+  image_urls?: string[];
+  image_paths?: string[];
 }
 
 export interface Response {
   id: string;
   question_id: string;
-  answer: string;
+  answer: string | null;
   created_at: string;
 }
 
@@ -40,7 +37,7 @@ export const uid = () =>
 export async function getQuestions(): Promise<Question[]> {
   const { data, error } = await supabase
     .from("questions")
-    .select("id, type, text_prompt, order, choices")
+    .select("id, type, text_prompt, order, choices, is_optional, image_urls, image_paths")
     .order("order", { ascending: true });
   if (error) throw error;
   return (data ?? []) as Question[];
@@ -52,19 +49,35 @@ export async function upsertQuestion(q: Question): Promise<void> {
     type: q.type,
     text_prompt: q.text_prompt,
     order: q.order,
-    choices: q.type === "multiple_choice" ? (q.choices ?? []) : null,
+    choices: q.type === "multiple_choice" ? q.choices ?? [] : null,
+    is_optional: q.is_optional,
+    image_urls: q.image_urls,
+    image_paths: q.image_paths,
   };
   const { error } = await supabase.from("questions").upsert(payload);
   if (error) throw error;
 }
 
 export async function deleteQuestion(id: string): Promise<void> {
-  // best-effort cleanup of storage files for this question's options
   const opts = await getOptionsForQuestion(id);
-  const paths = opts.map((o) => o.image_path).filter(Boolean) as string[];
-  if (paths.length > 0) {
-    await supabase.storage.from(LEVELS_BUCKET).remove(paths);
+  const levelImagePaths = opts.map((o) => o.image_path).filter(Boolean) as string[];
+
+  if (levelImagePaths.length > 0) {
+    await supabase.storage.from(LEVELS_BUCKET).remove(levelImagePaths);
   }
+
+  const { data: qData } = await supabase
+    .from("questions")
+    .select("image_paths")
+    .eq("id", id)
+    .single();
+
+  const paths = (qData?.image_paths ?? []).filter(Boolean);
+
+  if (paths.length > 0) {
+    await supabase.storage.from("question_images").remove(paths);
+  }
+
   const { error } = await supabase.from("questions").delete().eq("id", id);
   if (error) throw error;
 }
@@ -90,24 +103,27 @@ export async function getOptionsForQuestion(qid: string): Promise<LevelOption[]>
   return (data ?? []) as LevelOption[];
 }
 
-/**
- * Upload a single image to the storage bucket and return its public URL +
- * the storage path (used later for deletion).
- */
-export async function uploadLevelImage(
-  questionId: string,
+export async function uploadQuestionImage(
   file: File,
+  bucketName: string = LEVELS_BUCKET
 ): Promise<{ image_url: string; image_path: string }> {
+  const { data: userData, error: userErr } = await supabase.auth.getUser();
+  if (userErr || !userData?.user) throw userErr ?? new Error("Not authenticated");
+
   const ext = file.name.split(".").pop()?.toLowerCase() || "png";
-  const path = `${questionId}/${uid()}.${ext}`;
+
+  const path = `${userData.user.id}/${Date.now()}.${ext}`;
+
   const { error } = await supabase.storage
-    .from(LEVELS_BUCKET)
+    .from(bucketName)
     .upload(path, file, {
       contentType: file.type || `image/${ext}`,
       upsert: false,
     });
+
   if (error) throw error;
-  const { data } = supabase.storage.from(LEVELS_BUCKET).getPublicUrl(path);
+
+  const { data } = supabase.storage.from(bucketName).getPublicUrl(path);
   return { image_url: data.publicUrl, image_path: path };
 }
 
@@ -152,7 +168,7 @@ export async function deleteOption(id: string): Promise<void> {
 export async function addResponses(
   rs: Omit<Response, "id" | "created_at">[],
 ): Promise<void> {
-  if (rs.length === 0) return;
+  if (rs.length === 0) return; // No hay respuestas para añadir
   const { error } = await supabase.from("responses").insert(
     rs.map((r) => ({ question_id: r.question_id, answer: r.answer })),
   );
