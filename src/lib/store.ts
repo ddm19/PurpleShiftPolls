@@ -24,6 +24,7 @@ export interface Question {
   slider_max?: number;
   slider_left_label?: string;
   slider_right_label?: string;
+  slider_labels?: { value: number; label: string }[];
 }
 
 export interface Response {
@@ -42,7 +43,7 @@ export const uid = () =>
 export async function getQuestions(): Promise<Question[]> {
   const { data, error } = await supabase
     .from("questions")
-    .select("id, type, text_prompt, order, choices, is_optional, image_urls, image_paths, slider_min, slider_max, slider_left_label, slider_right_label")
+    .select("id, type, text_prompt, order, choices, is_optional, image_urls, image_paths, slider_min, slider_max, slider_left_label, slider_right_label, slider_labels")
     .order("order", { ascending: true });
   if (error) throw error;
   return (data ?? []) as Question[];
@@ -62,6 +63,7 @@ export async function upsertQuestion(q: Question): Promise<void> {
     slider_max: q.slider_max,
     slider_left_label: q.slider_left_label,
     slider_right_label: q.slider_right_label,
+    slider_labels: q.slider_labels,
   };
   const { error } = await supabase.from("questions").upsert(payload);
   if (error) throw error;

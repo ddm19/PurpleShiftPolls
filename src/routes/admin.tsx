@@ -139,6 +139,7 @@ function AdminConsole({ onLock }: { onLock: () => void }) {
       slider_max: 10,
       slider_left_label: "",
       slider_right_label: "",
+      slider_labels: [],
       choices: [],
     });
   };
@@ -417,37 +418,80 @@ function QuestionEditor({
 }
 
 function SliderEditor({ q, setQ }: { q: Question, setQ: (q: Question) => void }) {
+  const labels = q.slider_labels ?? [];
+
+  const addLabel = () => {
+    const newLabel = { value: Math.round(((q.slider_min ?? 0) + (q.slider_max ?? 10)) / 2), label: "" };
+    setQ({ ...q, slider_labels: [...labels, newLabel] });
+  }
+
+  const updateLabel = (index: number, newLabel: { value: number; label: string }) => {
+    const nextLabels = [...labels];
+    nextLabels[index] = newLabel;
+    setQ({ ...q, slider_labels: nextLabels });
+  }
+
+  const removeLabel = (index: number) => {
+    const nextLabels = [...labels];
+    nextLabels.splice(index, 1);
+    setQ({ ...q, slider_labels: nextLabels });
+  }
+
   return (
-    <div className="grid md:grid-cols-4 gap-4 mb-4">
-      <div>
-        <Label>Mínimo</Label>
-        <input
-          type="number"
-          className="input-cyber w-full"
-          value={q.slider_min ?? 0}
-          onChange={(e) => setQ({ ...q, slider_min: e.target.valueAsNumber })} />
+    <div className="space-y-4">
+      <div className="grid md:grid-cols-4 gap-4">
+        <div>
+          <Label>Mínimo</Label>
+          <input
+            type="number"
+            className="input-cyber w-full"
+            value={q.slider_min ?? 0}
+            onChange={(e) => setQ({ ...q, slider_min: e.target.valueAsNumber })} />
+        </div>
+        <div>
+          <Label>Máximo</Label>
+          <input
+            type="number"
+            className="input-cyber w-full"
+            value={q.slider_max ?? 10}
+            onChange={(e) => setQ({ ...q, slider_max: e.target.valueAsNumber })} />
+        </div>
+        <div>
+          <Label>Etiqueta Izquierda</Label>
+          <input
+            className="input-cyber w-full"
+            value={q.slider_left_label ?? ""}
+            onChange={(e) => setQ({ ...q, slider_left_label: e.target.value })} />
+        </div>
+        <div>
+          <Label>Etiqueta Derecha</Label>
+          <input
+            className="input-cyber w-full"
+            value={q.slider_right_label ?? ""}
+            onChange={(e) => setQ({ ...q, slider_right_label: e.target.value })} />
+        </div>
       </div>
-      <div>
-        <Label>Máximo</Label>
-        <input
-          type="number"
-          className="input-cyber w-full"
-          value={q.slider_max ?? 10}
-          onChange={(e) => setQ({ ...q, slider_max: e.target.valueAsNumber })} />
-      </div>
-      <div>
-        <Label>Etiqueta Izquierda</Label>
-        <input
-          className="input-cyber w-full"
-          value={q.slider_left_label ?? ""}
-          onChange={(e) => setQ({ ...q, slider_left_label: e.target.value })} />
-      </div>
-      <div>
-        <Label>Etiqueta Derecha</Label>
-        <input
-          className="input-cyber w-full"
-          value={q.slider_right_label ?? ""}
-          onChange={(e) => setQ({ ...q, slider_right_label: e.target.value })} />
+
+      <div className="space-y-2">
+        <Label>Etiquetas Intermedias</Label>
+        {labels.map((label, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <input
+              type="number"
+              className="input-cyber w-20"
+              value={label.value}
+              onChange={(e) => updateLabel(i, { ...label, value: e.target.valueAsNumber })}
+            />
+            <input
+              className="input-cyber flex-1"
+              value={label.label}
+              onChange={(e) => updateLabel(i, { ...label, label: e.target.value })}
+              placeholder="Texto de la etiqueta..."
+            />
+            <button className="btn-neon-red px-3 py-1 text-xs" onClick={() => removeLabel(i)}>✕</button>
+          </div>
+        ))}
+        <button className="btn-neon-blue px-3 py-1 text-xs" onClick={addLabel}>+ Añadir etiqueta</button>
       </div>
     </div>
   );

@@ -431,6 +431,19 @@ function SliderQuestion({
             {val}
           </div>
         </div>
+        {(q.slider_labels && q.slider_labels.length > 0) && (
+          <div className="w-full max-w-lg relative h-6 mt-1">
+            {q.slider_labels.map(label => {
+              const percent = ((label.value - min) / (max - min)) * 100;
+              return (
+                <div key={label.value} className="absolute text-center text-[10px] text-muted-foreground" style={{ left: `${percent}%`, transform: 'translateX(-50%)' }}>
+                  <div className="h-1.5 w-px bg-border"></div>
+                  {label.label}
+                </div>
+              )
+            })}
+          </div>
+        )}
         {q.slider_right_label && (
           <span className="text-sm text-muted-foreground flex-1">
             {q.slider_right_label}
