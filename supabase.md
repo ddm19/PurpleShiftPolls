@@ -42,12 +42,13 @@ password on the frontend.
 
 -- ---------- questions ----------
 create table if not exists public.questions (
-    id           uuid primary key default gen_random_uuid(),
-    type         text not null check (type in ('text', 'multiple_choice', 'level_gallery')),
-    text_prompt  text not null default '',
-    "order"      integer not null default 1,
-    choices      jsonb,
-    created_at   timestamptz not null default now()
+    id              uuid primary key default gen_random_uuid(),
+    type            text not null check (type in ('text', 'multiple_choice', 'level_gallery')),
+    text_prompt_es  text not null default '',
+    text_prompt_en  text not null default '',
+    "order"         integer not null default 1,
+    choices         jsonb,
+    created_at      timestamptz not null default now()
 );
 
 create index if not exists questions_order_idx on public.questions ("order");
@@ -162,14 +163,35 @@ Same caveat as the table policies — tighten once real auth is in place.
 Insert a few starter questions so the survey isn't empty on first load:
 
 ```sql
-insert into public.questions (type, text_prompt, "order", choices) values
-    ('text',            'What''s your callsign, operator?',              1, null),
-    ('multiple_choice', 'Preferred combat style in Purple Shift?',       2,
+insert into public.questions (type, text_prompt_es, text_prompt_en, "order", choices) values
+    ('text',            '¿Cuál es tu nombre en clave, operador?', 'What''s your callsign, operator?', 1, null),
+    ('multiple_choice', '¿Estilo de combate preferido en Purple Shift?', 'Preferred combat style in Purple Shift?', 2,
         '["Stealth Infiltrator","Heavy Gunner","Tech Hacker","Blade Runner"]'::jsonb),
-    ('level_gallery',   'Which level should we ship first?',             3, null);
+    ('level_gallery',   '¿Qué nivel deberíamos lanzar primero?', 'Which level should we ship first?', 3, null);
 ```
 
-## 6. Verify
+## 6. Migrating an existing database (single-language → bilingual prompts)
+
+If you already have a `questions` table with the old single `text_prompt`
+column, run this once in the SQL editor to split it into
+`text_prompt_es` / `text_prompt_en` without losing data (existing prompts are
+assumed to be Spanish, matching the original UI language):
+
+```sql
+alter table public.questions add column if not exists text_prompt_es text not null default '';
+alter table public.questions add column if not exists text_prompt_en text not null default '';
+
+update public.questions set text_prompt_es = text_prompt where text_prompt_es = '';
+
+alter table public.questions drop column if exists text_prompt;
+```
+
+After running this, go to `/admin` and fill in the English (`Question
+(English)`) field for each question — it stays empty until you translate it,
+and the survey falls back to the Spanish prompt for any question missing an
+English one.
+
+## 7. Verify
 
 1. Restart the dev server.
 2. Open `/admin`, enter password `7777`, and create or edit a question.

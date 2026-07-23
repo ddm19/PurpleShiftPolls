@@ -14,7 +14,8 @@ export interface LevelOption {
 export interface Question {
   id: string;
   type: QuestionType;
-  text_prompt: string;
+  text_prompt_es: string;
+  text_prompt_en: string;
   order: number;
   choices?: string[];
   is_optional?: boolean;
@@ -46,7 +47,7 @@ export async function getQuestions(): Promise<Question[]> {
   const { data, error } = await supabase
     .from("questions")
     .select(
-      "id, type, text_prompt, order, choices, is_optional, image_urls, image_paths, slider_min, slider_max, slider_left_label, slider_right_label, slider_labels",
+      "id, type, text_prompt_es, text_prompt_en, order, choices, is_optional, image_urls, image_paths, slider_min, slider_max, slider_left_label, slider_right_label, slider_labels",
     )
     .order("order", { ascending: true });
   if (error) throw error;
@@ -57,7 +58,8 @@ export async function upsertQuestion(q: Question): Promise<void> {
   const payload = {
     id: q.id,
     type: q.type,
-    text_prompt: q.text_prompt,
+    text_prompt_es: q.text_prompt_es,
+    text_prompt_en: q.text_prompt_en,
     order: q.order,
     choices: q.type === "multiple_choice" ? (q.choices ?? []) : null,
     is_optional: q.is_optional,
@@ -152,7 +154,8 @@ export async function duplicateQuestion(originalQuestionId: string): Promise<Que
   const { id: _id, created_at: _createdAt, order: _order, ...restOfQuestion } = original;
   const newQuestionPayload = {
     ...restOfQuestion,
-    text_prompt: `${original.text_prompt} (Copia)`,
+    text_prompt_es: original.text_prompt_es ? `${original.text_prompt_es} (Copia)` : "",
+    text_prompt_en: original.text_prompt_en ? `${original.text_prompt_en} (Copy)` : "",
     order: original.order,
   };
 

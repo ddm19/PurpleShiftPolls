@@ -167,7 +167,7 @@ function AnalyticsSummary({
 
       {questions.map((q) => (
         <div key={q.id} className="panel-cyber p-6">
-          <h3 className="font-bold text-lg mb-1">{q.text_prompt}</h3>
+          <h3 className="font-bold text-lg mb-1">{q.text_prompt_es || q.text_prompt_en}</h3>
           <p className="text-xs text-muted-foreground mb-4">
             #{q.order} · {q.type.replace("_", " ")} · {byQuestion[q.id]?.length ?? 0} respuestas
           </p>
@@ -296,7 +296,7 @@ function UserDetailView({
           const hasAnswer = answer !== null && answer !== undefined && answer !== "";
           return (
             <div key={q.id}>
-              <p className="text-sm font-bold">{q.text_prompt}</p>
+              <p className="text-sm font-bold">{q.text_prompt_es || q.text_prompt_en}</p>
               {hasAnswer ? (
                 <p className="text-purple-400 pl-4">{answer}</p>
               ) : (

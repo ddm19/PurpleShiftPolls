@@ -141,7 +141,8 @@ function AdminConsole({ onLock }: { onLock: () => void }) {
     setEditing({
       id: uid(),
       type: "text",
-      text_prompt: "",
+      text_prompt_es: "",
+      text_prompt_en: "",
       is_optional: false,
       order: questions.length + 1,
       slider_min: 0,
@@ -218,7 +219,7 @@ function AdminConsole({ onLock }: { onLock: () => void }) {
               isDropTarget={dropIndex === i}
               onEdit={() => setEditing(q)}
               onDelete={async () => {
-                if (confirm(`¿Borrar "${q.text_prompt}"?`)) {
+                if (confirm(`¿Borrar "${q.text_prompt_es || q.text_prompt_en}"?`)) {
                   try {
                     await deleteQuestion(q.id);
                     await refresh();
@@ -241,7 +242,7 @@ function AdminConsole({ onLock }: { onLock: () => void }) {
                 }
               }}
               onDuplicate={async () => {
-                if (!confirm(`¿Duplicar "${q.text_prompt}"?`)) return;
+                if (!confirm(`¿Duplicar "${q.text_prompt_es || q.text_prompt_en}"?`)) return;
                 try {
                   const newQuestion = await duplicateQuestion(q.id);
                   const originalIndex = questions.findIndex((x) => x.id === q.id);
@@ -324,7 +325,10 @@ function QuestionRow({
         <div className="text-[10px] tracking-widest neon-text-blue mb-1 select-none">
           {q.type.toUpperCase().replace("_", " ")}
         </div>
-        <div className="font-bold truncate">{q.text_prompt || "(sin título)"}</div>
+        <div className="font-bold truncate">{q.text_prompt_es || q.text_prompt_en || "(sin título)"}</div>
+        {q.text_prompt_en && (
+          <div className="text-xs text-muted-foreground truncate">EN: {q.text_prompt_en}</div>
+        )}
       </div>
       <div className="flex gap-1">
         <button className="btn-neon-blue px-2 py-1 text-xs" onClick={() => onMove(-1)}>
@@ -377,13 +381,22 @@ function QuestionEditor({
     <div className="panel-cyber p-6 neon-border-purple slide-in">
       <div className="grid md:grid-cols-3 gap-4 mb-4">
         <div className="md:col-span-2">
-          <Label>Pregunta</Label>
+          <Label>Pregunta (Español)</Label>
           <input
             className="input-cyber w-full"
-            value={q.text_prompt}
-            onChange={(e) => setQ({ ...q, text_prompt: e.target.value })}
-            placeholder="Introduce el texto de la pregunta..."
+            value={q.text_prompt_es}
+            onChange={(e) => setQ({ ...q, text_prompt_es: e.target.value })}
+            placeholder="Introduce el texto de la pregunta en español..."
           />
+          <div className="mt-3">
+            <Label>Question (English)</Label>
+            <input
+              className="input-cyber w-full"
+              value={q.text_prompt_en}
+              onChange={(e) => setQ({ ...q, text_prompt_en: e.target.value })}
+              placeholder="Introduce el texto de la pregunta en inglés..."
+            />
+          </div>
           <div className="mt-2 flex items-center gap-2">
             <input
               type="checkbox"

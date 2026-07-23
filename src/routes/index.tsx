@@ -9,6 +9,7 @@ import {
   type Question,
   type LevelOption,
 } from "@/lib/store";
+import { type Locale, translate, getPrompt } from "@/lib/i18n";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -39,6 +40,7 @@ function SurveyPage() {
   const [submitting, setSubmitting] = useState(false);
   const [userId, setUserId] = useState("");
   const [mailingListSubmitted, setMailingListSubmitted] = useState(false);
+  const [locale, setLocale] = useState<Locale | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -88,24 +90,33 @@ function SurveyPage() {
     }
   };
 
+  if (locale === null) {
+    return (
+      <Shell locale="es">
+        <LanguageGate onSelect={setLocale} />
+      </Shell>
+    );
+  }
+
+  const t = (key: Parameters<typeof translate>[1], vars?: Record<string, string | number>) =>
+    translate(locale, key, vars);
+
   if (loading) {
     return (
-      <Shell>
-        <p className="text-muted-foreground">// cargando red de encuestas...</p>
+      <Shell locale={locale}>
+        <p className="text-muted-foreground">{t("loading_survey")}</p>
       </Shell>
     );
   }
 
   if (error) {
     return (
-      <Shell>
+      <Shell locale={locale}>
         <div className="panel-cyber p-6 sm:p-8">
           <h2 className="neon-text-red text-lg sm:text-xl mb-3 tracking-widest">
-            ✕ ERROR DE CONEXIÓN
+            {t("error_title")}
           </h2>
-          <p className="text-muted-foreground text-sm mb-2">
-            // no se pudo conectar con el servidor central.
-          </p>
+          <p className="text-muted-foreground text-sm mb-2">{t("error_subtitle")}</p>
           <pre className="text-xs text-muted-foreground whitespace-pre-wrap">{error}</pre>
         </div>
       </Shell>
@@ -114,14 +125,14 @@ function SurveyPage() {
 
   if (questions.length === 0) {
     return (
-      <Shell>
+      <Shell locale={locale}>
         <div className="panel-cyber p-8 text-center">
           <p className="text-muted-foreground">
-            // no hay preguntas configuradas. visita{" "}
+            {t("empty_questions_pre")}{" "}
             <a href="/admin" className="neon-text-blue">
               /admin
             </a>{" "}
-            para configurarlas.
+            {t("empty_questions_post")}
           </p>
         </div>
       </Shell>
@@ -131,11 +142,13 @@ function SurveyPage() {
   if (done) {
     return (
       <MailingListSignup
+        locale={locale}
         onReset={() => {
           setAnswers({});
           setIdx(0);
           setDone(false);
           setMailingListSubmitted(false);
+          setLocale(null);
         }}
         submitted={mailingListSubmitted}
         onSubmitted={() => setMailingListSubmitted(true)}
@@ -144,20 +157,43 @@ function SurveyPage() {
   }
 
   return (
-    <Shell>
-      <ProgressBar current={idx + 1} total={questions.length} />
+    <Shell locale={locale}>
+      <ProgressBar current={idx + 1} total={questions.length} locale={locale} />
       <div key={current.id} className="slide-in">
-        <QuestionView question={current} onAnswer={next} disabled={submitting} />
+        <QuestionView question={current} onAnswer={next} disabled={submitting} locale={locale} />
       </div>
     </Shell>
   );
 }
 
+function LanguageGate({ onSelect }: { onSelect: (locale: Locale) => void }) {
+  return (
+    <div className="panel-cyber p-8 sm:p-10 text-center slide-in">
+      <div className="text-[10px] tracking-[0.4em] text-muted-foreground mb-3">
+        // SELECCIONA IDIOMA / SELECT LANGUAGE
+      </div>
+      <h2 className="neon-text-purple text-2xl sm:text-3xl font-bold mb-8 tracking-widest">
+        Idioma / Language
+      </h2>
+      <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        <button className="btn-neon-purple px-8 py-4 text-lg" onClick={() => onSelect("es")}>
+          Español
+        </button>
+        <button className="btn-neon-blue px-8 py-4 text-lg" onClick={() => onSelect("en")}>
+          English
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function MailingListSignup({
+  locale,
   submitted,
   onSubmitted,
   onReset,
 }: {
+  locale: Locale;
   submitted: boolean;
   onSubmitted: () => void;
   onReset: () => void;
@@ -165,10 +201,11 @@ function MailingListSignup({
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const t = (key: Parameters<typeof translate>[1]) => translate(locale, key);
 
   const handleSubmit = async () => {
     if (!email.trim() || !email.includes("@")) {
-      setError("Por favor, introduce un correo electrónico válido.");
+      setError(t("invalid_email"));
       return;
     }
     setLoading(true);
@@ -185,35 +222,32 @@ function MailingListSignup({
 
   if (submitted) {
     return (
-      <Shell>
+      <Shell locale={locale}>
         <div className="slide-in text-center">
-          <p className="text-muted-foreground">Gracias por completar la encuesta.</p>
+          <p className="text-muted-foreground">{t("thanks_final")}</p>
         </div>
       </Shell>
     );
   }
 
   return (
-    <Shell>
+    <Shell locale={locale}>
       <div className="slide-in text-center max-w-2xl mx-auto">
         <h1 className="neon-text-purple text-3xl sm:text-4xl font-bold mb-4">
-          Gracias por completar la encuesta
+          {t("thanks_heading")}
         </h1>
-        <p className="text-muted-foreground mb-6">
-          ¿Te gustaría saber más sobre Purple Shift? Anótate en nuestra lista de correo para recibir
-          noticias y actualizaciones.
-        </p>
+        <p className="text-muted-foreground mb-6">{t("thanks_body")}</p>
         <div className="flex flex-col sm:flex-row gap-3">
           <input
             type="email"
             className="input-cyber flex-1 text-center sm:text-left"
-            placeholder="tu-correo@electronico.com"
+            placeholder={t("email_placeholder")}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             disabled={loading}
           />
           <button className="btn-neon-purple px-6 py-3" onClick={handleSubmit} disabled={loading}>
-            {loading ? "Enviando..." : "Suscribirme"}
+            {loading ? t("sending") : t("subscribe")}
           </button>
         </div>
         {error && <p className="text-red-400 text-xs mt-2">{error}</p>}
@@ -221,14 +255,15 @@ function MailingListSignup({
           className="text-xs text-muted-foreground hover:neon-text-blue tracking-widest mt-8"
           onClick={onSubmitted}
         >
-          No, gracias
+          {t("no_thanks")}
         </button>
       </div>
     </Shell>
   );
 }
 
-function Shell({ children }: { children: React.ReactNode }) {
+function Shell({ children, locale }: { children: React.ReactNode; locale: Locale }) {
+  const t = (key: Parameters<typeof translate>[1]) => translate(locale, key);
   return (
     <div className="relative z-10 min-h-screen flex flex-col">
       <header className="flex items-center justify-between border-b border-border/40 px-4 py-3 sm:px-6">
@@ -236,7 +271,7 @@ function Shell({ children }: { children: React.ReactNode }) {
           <img src="/purplelogo.png" alt="Purple Shift Logo" className="h-10 w-auto" />
           <div className="hidden sm:block">
             <div className="text-[10px] text-muted-foreground tracking-widest">
-              Encuesta de Playtest de la versión v26.07.14
+              {t("header_subtitle")}
             </div>
           </div>
         </Link>
@@ -244,7 +279,7 @@ function Shell({ children }: { children: React.ReactNode }) {
           href="/admin"
           className="text-xs uppercase tracking-widest text-muted-foreground hover:neon-text-blue"
         >
-          [ ADMIN ]
+          {t("admin_link")}
         </a>
       </header>
       <main className="flex-1 flex items-center justify-center px-4 py-8">
@@ -254,13 +289,24 @@ function Shell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ProgressBar({ current, total }: { current: number; total: number }) {
+function ProgressBar({
+  current,
+  total,
+  locale,
+}: {
+  current: number;
+  total: number;
+  locale: Locale;
+}) {
   const pct = (current / total) * 100;
   return (
     <div className="mb-6 sm:mb-8">
       <div className="flex justify-between text-[10px] tracking-widest text-muted-foreground mb-2">
         <span>
-          PREGUNTA {String(current).padStart(2, "0")} / {String(total).padStart(2, "0")}
+          {translate(locale, "question_counter", {
+            current: String(current).padStart(2, "0"),
+            total: String(total).padStart(2, "0"),
+          })}
         </span>
         <span className="neon-text-blue">{Math.round(pct)}%</span>
       </div>
@@ -283,24 +329,27 @@ function QuestionView({
   question,
   onAnswer,
   disabled,
+  locale,
 }: {
   question: Question;
   onAnswer: (value: string) => void;
   disabled?: boolean;
+  locale: Locale;
 }) {
   if (question.type === "text")
-    return <TextQuestion q={question} onAnswer={onAnswer} disabled={disabled} />;
+    return <TextQuestion q={question} onAnswer={onAnswer} disabled={disabled} locale={locale} />;
   if (question.type === "numeric")
-    return <NumericQuestion q={question} onAnswer={onAnswer} disabled={disabled} />;
+    return <NumericQuestion q={question} onAnswer={onAnswer} disabled={disabled} locale={locale} />;
   if (question.type === "multiple_choice")
-    return <ChoiceQuestion q={question} onAnswer={onAnswer} disabled={disabled} />;
+    return <ChoiceQuestion q={question} onAnswer={onAnswer} disabled={disabled} locale={locale} />;
   if (question.type === "slider")
-    return <SliderQuestion q={question} onAnswer={onAnswer} disabled={disabled} />;
-  return <GalleryQuestion q={question} onAnswer={onAnswer} disabled={disabled} />;
+    return <SliderQuestion q={question} onAnswer={onAnswer} disabled={disabled} locale={locale} />;
+  return <GalleryQuestion q={question} onAnswer={onAnswer} disabled={disabled} locale={locale} />;
 }
 
-function QuestionImages({ urls }: { urls?: string[] }) {
+function QuestionImages({ urls, locale }: { urls?: string[]; locale: Locale }) {
   const [zoomedUrl, setZoomedUrl] = useState<string | null>(null);
+  const t = (key: Parameters<typeof translate>[1]) => translate(locale, key);
 
   if (!urls || urls.length === 0) return null;
 
@@ -315,7 +364,7 @@ function QuestionImages({ urls }: { urls?: string[] }) {
           >
             <img
               src={url}
-              alt="Imagen de la pregunta"
+              alt={t("question_image_alt")}
               className="h-auto w-full max-h-48 rounded-sm object-contain"
             />
           </button>
@@ -329,13 +378,13 @@ function QuestionImages({ urls }: { urls?: string[] }) {
         >
           <button
             className="absolute top-4 right-4 text-white text-4xl z-50"
-            aria-label="Cerrar imagen"
+            aria-label={t("close_image")}
           >
             &times;
           </button>
           <img
             src={zoomedUrl}
-            alt="Imagen ampliada"
+            alt={t("enlarged_image_alt")}
             className="max-w-[95vw] max-h-[95vh] object-contain"
             onClick={(e) => e.stopPropagation()} // Evita que el clic en la imagen cierre el modal
           />
@@ -358,20 +407,23 @@ function TextQuestion({
   q,
   onAnswer,
   disabled,
+  locale,
 }: {
   q: Question;
   onAnswer: (v: string) => void;
   disabled?: boolean;
+  locale: Locale;
 }) {
   const [val, setVal] = useState("");
+  const t = (key: Parameters<typeof translate>[1]) => translate(locale, key);
   return (
     <div className="panel-cyber p-6 sm:p-8">
-      <Prompt>{q.text_prompt}</Prompt>
-      <QuestionImages urls={q.image_urls} />
+      <Prompt>{getPrompt(q, locale)}</Prompt>
+      <QuestionImages urls={q.image_urls} locale={locale} />
       <input
         autoFocus
         className="input-cyber w-full text-base sm:text-lg"
-        placeholder="introduce tu respuesta..."
+        placeholder={t("answer_placeholder")}
         value={val}
         onChange={(e) => setVal(e.target.value)}
         onKeyDown={(e) => {
@@ -385,7 +437,7 @@ function TextQuestion({
             disabled={disabled}
             onClick={() => onAnswer("")}
           >
-            Saltar →
+            {t("skip")}
           </button>
         )}
         <button
@@ -393,7 +445,7 @@ function TextQuestion({
           disabled={!val.trim() || disabled}
           onClick={() => onAnswer(val.trim())}
         >
-          Transmitir →
+          {t("transmit")}
         </button>
       </div>
     </div>
@@ -404,22 +456,25 @@ function NumericQuestion({
   q,
   onAnswer,
   disabled,
+  locale,
 }: {
   q: Question;
   onAnswer: (v: string) => void;
   disabled?: boolean;
+  locale: Locale;
 }) {
   const [val, setVal] = useState("");
+  const t = (key: Parameters<typeof translate>[1]) => translate(locale, key);
   return (
     <div className="panel-cyber p-6 sm:p-8">
-      <Prompt>{q.text_prompt}</Prompt>
-      <QuestionImages urls={q.image_urls} />
+      <Prompt>{getPrompt(q, locale)}</Prompt>
+      <QuestionImages urls={q.image_urls} locale={locale} />
       <input
         autoFocus
         type="number"
         inputMode="numeric"
         className="input-cyber w-full text-base sm:text-lg"
-        placeholder="introduce un número..."
+        placeholder={t("numeric_placeholder")}
         value={val}
         onChange={(e) => setVal(e.target.value)}
         onKeyDown={(e) => {
@@ -433,7 +488,7 @@ function NumericQuestion({
             disabled={disabled}
             onClick={() => onAnswer("")}
           >
-            Saltar →
+            {t("skip")}
           </button>
         )}
         <button
@@ -441,7 +496,7 @@ function NumericQuestion({
           disabled={!val.trim() || disabled}
           onClick={() => onAnswer(val.trim())}
         >
-          Transmitir →
+          {t("transmit")}
         </button>
       </div>
     </div>
@@ -452,16 +507,19 @@ function ChoiceQuestion({
   q,
   onAnswer,
   disabled,
+  locale,
 }: {
   q: Question;
   onAnswer: (v: string) => void;
   disabled?: boolean;
+  locale: Locale;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
+  const t = (key: Parameters<typeof translate>[1]) => translate(locale, key);
   return (
     <div className="panel-cyber p-6 sm:p-8">
-      <Prompt>{q.text_prompt}</Prompt>
-      <QuestionImages urls={q.image_urls} />
+      <Prompt>{getPrompt(q, locale)}</Prompt>
+      <QuestionImages urls={q.image_urls} locale={locale} />
       <div className="space-y-3">
         {(q.choices ?? []).map((c) => {
           const isSel = selected === c;
@@ -488,7 +546,7 @@ function ChoiceQuestion({
             disabled={disabled}
             onClick={() => onAnswer("")}
           >
-            Saltar →
+            {t("skip")}
           </button>
         )}
         <button
@@ -496,7 +554,7 @@ function ChoiceQuestion({
           disabled={!selected || disabled}
           onClick={() => selected && onAnswer(selected)}
         >
-          Confirmar →
+          {t("confirm")}
         </button>
       </div>
     </div>
@@ -507,19 +565,22 @@ function SliderQuestion({
   q,
   onAnswer,
   disabled,
+  locale,
 }: {
   q: Question;
   onAnswer: (v: string) => void;
   disabled?: boolean;
+  locale: Locale;
 }) {
   const min = q.slider_min ?? 0;
   const max = q.slider_max ?? 10;
   const [val, setVal] = useState<number>(Math.round((min + max) / 2));
+  const t = (key: Parameters<typeof translate>[1]) => translate(locale, key);
 
   return (
     <div className="panel-cyber p-6 sm:p-8">
-      <Prompt>{q.text_prompt}</Prompt>
-      <QuestionImages urls={q.image_urls} />
+      <Prompt>{getPrompt(q, locale)}</Prompt>
+      <QuestionImages urls={q.image_urls} locale={locale} />
 
       <div className="flex items-start gap-4 my-8">
         {q.slider_left_label && (
@@ -575,7 +636,7 @@ function SliderQuestion({
             disabled={disabled}
             onClick={() => onAnswer("")}
           >
-            Saltar →
+            {t("skip")}
           </button>
         )}
         <button
@@ -583,7 +644,7 @@ function SliderQuestion({
           disabled={disabled}
           onClick={() => onAnswer(String(val))}
         >
-          Confirmar →
+          {t("confirm")}
         </button>
       </div>
     </div>
@@ -594,10 +655,12 @@ function GalleryQuestion({
   q,
   onAnswer,
   disabled,
+  locale,
 }: {
   q: Question;
   onAnswer: (v: string) => void;
   disabled?: boolean;
+  locale: Locale;
 }) {
   const [options, setOptions] = useState<LevelOption[]>([]);
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -674,11 +737,14 @@ function GalleryQuestion({
     scrollTo(newIndex);
   };
 
+  const t = (key: Parameters<typeof translate>[1], vars?: Record<string, string | number>) =>
+    translate(locale, key, vars);
+
   if (loading) {
     return (
       <div className="panel-cyber p-8 text-center">
-        <Prompt>{q.text_prompt}</Prompt>
-        <p className="text-muted-foreground">// obteniendo datos de niveles...</p>
+        <Prompt>{getPrompt(q, locale)}</Prompt>
+        <p className="text-muted-foreground">{t("gallery_loading")}</p>
       </div>
     );
   }
@@ -686,13 +752,11 @@ function GalleryQuestion({
   if (options.length === 0) {
     return (
       <div className="panel-cyber p-8 text-center">
-        <Prompt>{q.text_prompt}</Prompt>
-        <p className="text-muted-foreground mb-6">
-          // aún no se han subido datos de niveles. visita /admin para cargarlos.
-        </p>
+        <Prompt>{getPrompt(q, locale)}</Prompt>
+        <p className="text-muted-foreground mb-6">{t("gallery_empty")}</p>
         {q.is_optional && (
           <button className="btn-neon-blue px-6 py-2" onClick={() => onAnswer("")}>
-            Saltar →
+            {t("skip")}
           </button>
         )}
       </div>
@@ -701,8 +765,8 @@ function GalleryQuestion({
 
   return (
     <div>
-      <Prompt>{q.text_prompt}</Prompt>
-      <QuestionImages urls={q.image_urls} />
+      <Prompt>{getPrompt(q, locale)}</Prompt>
+      <QuestionImages urls={q.image_urls} locale={locale} />
       <div className="relative">
         <div
           ref={scrollerRef}
@@ -715,14 +779,14 @@ function GalleryQuestion({
           }}
         >
           {options.map((opt, i) => (
-            <LevelCard key={opt.id} opt={opt} active={i === focusedIdx} />
+            <LevelCard key={opt.id} opt={opt} active={i === focusedIdx} locale={locale} />
           ))}
         </div>
         <button
           onClick={scrollPrev}
           disabled={focusedIdx === 0}
           className="absolute left-0 sm:left-4 top-1/2 -translate-y-1/2 btn-neon-blue p-2 w-10 h-10 sm:w-12 sm:h-12 rounded-full disabled:opacity-20 disabled:cursor-not-allowed z-10"
-          aria-label="Nivel anterior"
+          aria-label={t("previous_level")}
         >
           {"<"}
         </button>
@@ -730,14 +794,14 @@ function GalleryQuestion({
           onClick={scrollNext}
           disabled={focusedIdx === options.length - 1}
           className="absolute right-0 sm:right-4 top-1/2 -translate-y-1/2 btn-neon-blue p-2 w-10 h-10 sm:w-12 sm:h-12 rounded-full disabled:opacity-20 disabled:cursor-not-allowed z-10"
-          aria-label="Siguiente nivel"
+          aria-label={t("next_level")}
         >
           {">"}
         </button>
       </div>
       <div className="mt-4 sm:mt-6 text-center">
         <div className="text-[10px] tracking-widest text-muted-foreground mb-3">
-          SELECCIONADO // {focusedIdx + 1} DE {options.length}
+          {t("selected_counter", { current: focusedIdx + 1, total: options.length })}
         </div>
         <div className="h-8 mb-3 text-lg neon-text-purple font-bold tracking-widest transition-opacity duration-300">
           {focused?.title}
@@ -749,7 +813,7 @@ function GalleryQuestion({
               disabled={disabled}
               onClick={() => onAnswer("")}
             >
-              Saltar →
+              {t("skip")}
             </button>
           )}
           <button
@@ -757,7 +821,7 @@ function GalleryQuestion({
             disabled={disabled || !focused}
             onClick={() => focused && onAnswer(focused.id)}
           >
-            ▶ Votar por este Nivel
+            {t("vote_level")}
           </button>
         </div>
       </div>
@@ -765,7 +829,15 @@ function GalleryQuestion({
   );
 }
 
-function LevelCard({ opt, active }: { opt: LevelOption; active: boolean }) {
+function LevelCard({
+  opt,
+  active,
+  locale,
+}: {
+  opt: LevelOption;
+  active: boolean;
+  locale: Locale;
+}) {
   return (
     <div
       data-card
@@ -781,7 +853,7 @@ function LevelCard({ opt, active }: { opt: LevelOption; active: boolean }) {
         />
       ) : (
         <div className="min-h-48 w-full bg-muted flex items-center justify-center text-muted-foreground">
-          sin imagen
+          {translate(locale, "no_image")}
         </div>
       )}
     </div>
