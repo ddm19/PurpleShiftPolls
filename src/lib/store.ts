@@ -17,7 +17,8 @@ export interface Question {
   text_prompt_es: string;
   text_prompt_en: string;
   order: number;
-  choices?: string[];
+  choices_es?: string[];
+  choices_en?: string[];
   is_optional?: boolean;
   image_urls?: string[];
   image_paths?: string[];
@@ -47,7 +48,7 @@ export async function getQuestions(): Promise<Question[]> {
   const { data, error } = await supabase
     .from("questions")
     .select(
-      "id, type, text_prompt_es, text_prompt_en, order, choices, is_optional, image_urls, image_paths, slider_min, slider_max, slider_left_label, slider_right_label, slider_labels",
+      "id, type, text_prompt_es, text_prompt_en, order, choices_es, choices_en, is_optional, image_urls, image_paths, slider_min, slider_max, slider_left_label, slider_right_label, slider_labels",
     )
     .order("order", { ascending: true });
   if (error) throw error;
@@ -61,7 +62,8 @@ export async function upsertQuestion(q: Question): Promise<void> {
     text_prompt_es: q.text_prompt_es,
     text_prompt_en: q.text_prompt_en,
     order: q.order,
-    choices: q.type === "multiple_choice" ? (q.choices ?? []) : null,
+    choices_es: q.type === "multiple_choice" ? (q.choices_es ?? []) : null,
+    choices_en: q.type === "multiple_choice" ? (q.choices_en ?? []) : null,
     is_optional: q.is_optional,
     image_urls: q.image_urls,
     image_paths: q.image_paths,

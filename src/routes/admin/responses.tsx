@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { getAllResponses, getQuestions, type Question, type Response } from "@/lib/store";
+import { zipChoices } from "@/lib/i18n";
 
 export const Route = createFileRoute("/admin/responses")({
   component: ResponsesPage,
@@ -190,19 +191,25 @@ function QuestionAnalytics({ question, responses }: { question: Question; respon
 
   const total = answers.reduce((sum, [, count]) => sum + count, 0);
 
-  if (question.type === "multiple_choice" || question.type === "level_gallery") {
-    const options = question.type === "multiple_choice" ? (question.choices ?? []) : [];
+  if (question.type === "multiple_choice") {
+    const rows = zipChoices(question);
     const answerMap = new Map(answers);
 
     return (
       <div className="space-y-2">
-        {options.map((opt) => {
-          const count = answerMap.get(opt) || 0;
+        {rows.map((row, i) => {
+          const label = row.es || row.en;
+          const count = (answerMap.get(row.es) || 0) + (row.en !== row.es ? answerMap.get(row.en) || 0 : 0);
           const pct = total > 0 ? (count / total) * 100 : 0;
           return (
-            <div key={opt}>
+            <div key={i}>
               <div className="flex justify-between text-sm mb-1">
-                <span className="truncate">{opt}</span>
+                <span className="truncate">
+                  {label}
+                  {row.es && row.en && row.es !== row.en && (
+                    <span className="text-muted-foreground"> / {row.en}</span>
+                  )}
+                </span>
                 <span className="text-muted-foreground">{count} votos</span>
               </div>
               <div className="h-4 bg-primary/10 w-full">

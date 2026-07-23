@@ -150,7 +150,8 @@ function AdminConsole({ onLock }: { onLock: () => void }) {
       slider_left_label: "",
       slider_right_label: "",
       slider_labels: [],
-      choices: [],
+      choices_es: [],
+      choices_en: [],
     });
   };
 
@@ -361,18 +362,19 @@ function QuestionEditor({
   onCancel: () => void;
 }) {
   const [q, setQ] = useState<Question>(question);
-  const [choicesText, setChoicesText] = useState((question.choices ?? []).join("\n"));
+  const [choicesTextEs, setChoicesTextEs] = useState((question.choices_es ?? []).join("\n"));
+  const [choicesTextEn, setChoicesTextEn] = useState((question.choices_en ?? []).join("\n"));
 
   const save = () => {
+    const splitLines = (text: string) =>
+      text
+        .split("\n")
+        .map((s) => s.trim())
+        .filter(Boolean);
     const cleaned: Question = {
       ...q,
-      choices:
-        q.type === "multiple_choice"
-          ? choicesText
-              .split("\n")
-              .map((s) => s.trim())
-              .filter(Boolean)
-          : [],
+      choices_es: q.type === "multiple_choice" ? splitLines(choicesTextEs) : [],
+      choices_en: q.type === "multiple_choice" ? splitLines(choicesTextEn) : [],
     };
     onSave(cleaned);
   };
@@ -426,15 +428,27 @@ function QuestionEditor({
       </div>
 
       {q.type === "multiple_choice" && (
-        <div className="mb-4">
-          <Label>Opciones (una por línea)</Label>
-          <textarea
-            className="input-cyber w-full font-mono"
-            rows={4}
-            value={choicesText}
-            onChange={(e) => setChoicesText(e.target.value)}
-            placeholder={"Opción A\nOpción B\nOpción C"}
-          />
+        <div className="mb-4 grid md:grid-cols-2 gap-4">
+          <div>
+            <Label>Opciones en Español (una por línea)</Label>
+            <textarea
+              className="input-cyber w-full font-mono"
+              rows={4}
+              value={choicesTextEs}
+              onChange={(e) => setChoicesTextEs(e.target.value)}
+              placeholder={"Opción A\nOpción B\nOpción C"}
+            />
+          </div>
+          <div>
+            <Label>Options in English (una por línea, mismo orden)</Label>
+            <textarea
+              className="input-cyber w-full font-mono"
+              rows={4}
+              value={choicesTextEn}
+              onChange={(e) => setChoicesTextEn(e.target.value)}
+              placeholder={"Option A\nOption B\nOption C"}
+            />
+          </div>
         </div>
       )}
 

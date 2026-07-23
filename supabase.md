@@ -47,7 +47,8 @@ create table if not exists public.questions (
     text_prompt_es  text not null default '',
     text_prompt_en  text not null default '',
     "order"         integer not null default 1,
-    choices         jsonb,
+    choices_es      jsonb,
+    choices_en      jsonb,
     created_at      timestamptz not null default now()
 );
 
@@ -163,33 +164,43 @@ Same caveat as the table policies — tighten once real auth is in place.
 Insert a few starter questions so the survey isn't empty on first load:
 
 ```sql
-insert into public.questions (type, text_prompt_es, text_prompt_en, "order", choices) values
-    ('text',            '¿Cuál es tu nombre en clave, operador?', 'What''s your callsign, operator?', 1, null),
+insert into public.questions (type, text_prompt_es, text_prompt_en, "order", choices_es, choices_en) values
+    ('text',            '¿Cuál es tu nombre en clave, operador?', 'What''s your callsign, operator?', 1, null, null),
     ('multiple_choice', '¿Estilo de combate preferido en Purple Shift?', 'Preferred combat style in Purple Shift?', 2,
+        '["Infiltrador Sigiloso","Artillero Pesado","Hacker Técnico","Corredor de Cuchillas"]'::jsonb,
         '["Stealth Infiltrator","Heavy Gunner","Tech Hacker","Blade Runner"]'::jsonb),
-    ('level_gallery',   '¿Qué nivel deberíamos lanzar primero?', 'Which level should we ship first?', 3, null);
+    ('level_gallery',   '¿Qué nivel deberíamos lanzar primero?', 'Which level should we ship first?', 3, null, null);
 ```
 
-## 6. Migrating an existing database (single-language → bilingual prompts)
+> Note: `choices_es` and `choices_en` must line up by array position — item `i`
+> in one is the translation of item `i` in the other. The admin editor enforces
+> this by keeping both option lists in the same order.
 
-If you already have a `questions` table with the old single `text_prompt`
-column, run this once in the SQL editor to split it into
-`text_prompt_es` / `text_prompt_en` without losing data (existing prompts are
-assumed to be Spanish, matching the original UI language):
+## 6. Migrating an existing database (single-language → bilingual prompts/choices)
+
+If you already have a `questions` table with the old single `text_prompt` /
+`choices` columns, run this once in the SQL editor to split them into
+`text_prompt_es` / `text_prompt_en` and `choices_es` / `choices_en` without
+losing data (existing content is assumed to be Spanish, matching the original
+UI language):
 
 ```sql
 alter table public.questions add column if not exists text_prompt_es text not null default '';
 alter table public.questions add column if not exists text_prompt_en text not null default '';
+alter table public.questions add column if not exists choices_es jsonb;
+alter table public.questions add column if not exists choices_en jsonb;
 
-update public.questions set text_prompt_es = text_prompt where text_prompt_es = '';
+update public.questions set text_prompt_es = text_prompt where text_prompt_es = '' and text_prompt is not null;
+update public.questions set choices_es = choices where choices_es is null and choices is not null;
 
 alter table public.questions drop column if exists text_prompt;
+alter table public.questions drop column if exists choices;
 ```
 
 After running this, go to `/admin` and fill in the English (`Question
-(English)`) field for each question — it stays empty until you translate it,
-and the survey falls back to the Spanish prompt for any question missing an
-English one.
+(English)` / `Options in English`) fields for each question — they stay empty
+until you translate them, and the survey falls back to the Spanish text for
+anything missing an English translation.
 
 ## 7. Verify
 

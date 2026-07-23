@@ -95,3 +95,29 @@ export function getPrompt(
   if (locale === "en") return q.text_prompt_en || q.text_prompt_es;
   return q.text_prompt_es || q.text_prompt_en;
 }
+
+/** Resolves the multiple-choice options to show for a given locale, falling back
+ * per-item to the other language when a translation is missing. */
+export function getChoices(
+  q: { choices_es?: string[] | null; choices_en?: string[] | null },
+  locale: Locale,
+): string[] {
+  const esArr = q.choices_es ?? [];
+  const enArr = q.choices_en ?? [];
+  const len = Math.max(esArr.length, enArr.length);
+  return Array.from({ length: len }, (_, i) =>
+    locale === "en" ? enArr[i] || esArr[i] || "" : esArr[i] || enArr[i] || "",
+  );
+}
+
+/** Pairs up choices_es/choices_en by index — used to aggregate responses that were
+ * answered in either language under the same logical option. */
+export function zipChoices(q: {
+  choices_es?: string[] | null;
+  choices_en?: string[] | null;
+}): { es: string; en: string }[] {
+  const esArr = q.choices_es ?? [];
+  const enArr = q.choices_en ?? [];
+  const len = Math.max(esArr.length, enArr.length);
+  return Array.from({ length: len }, (_, i) => ({ es: esArr[i] ?? "", en: enArr[i] ?? "" }));
+}

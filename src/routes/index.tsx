@@ -9,7 +9,7 @@ import {
   type Question,
   type LevelOption,
 } from "@/lib/store";
-import { type Locale, translate, getPrompt } from "@/lib/i18n";
+import { type Locale, translate, getPrompt, getChoices } from "@/lib/i18n";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -516,12 +516,13 @@ function ChoiceQuestion({
 }) {
   const [selected, setSelected] = useState<string | null>(null);
   const t = (key: Parameters<typeof translate>[1]) => translate(locale, key);
+  const choices = getChoices(q, locale);
   return (
     <div className="panel-cyber p-6 sm:p-8">
       <Prompt>{getPrompt(q, locale)}</Prompt>
       <QuestionImages urls={q.image_urls} locale={locale} />
       <div className="space-y-3">
-        {(q.choices ?? []).map((c) => {
+        {choices.map((c) => {
           const isSel = selected === c;
           return (
             <button
